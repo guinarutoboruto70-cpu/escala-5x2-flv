@@ -7,8 +7,8 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>Escala 5x2 FLV</title>
 <style>
-:root{--bg:#f4f7f9;--card:#fff;--tx:#1b2a33;--mut:#6b7c86;--pri:#0D7EA4;--f:#fde68a;--d:#bbf7d0;--w:#fee2e2;--ln:#dde5ea}
-@media(prefers-color-scheme:dark){:root{--bg:#10181d;--card:#18232a;--tx:#e8f0f4;--mut:#93a4ae;--f:#7c5e10;--d:#14532d;--w:#5b1f1f;--ln:#2a3a44}}
+:root{--bg:#f4f7f9;--card:#fff;--tx:#1b2a33;--mut:#6b7c86;--pri:#0D7EA4;--f:#fde68a;--d:#bbf7d0;--w:#fee2e2;--ln:#dde5ea;--qua:#d1fae5;--quat:#065f46;--dm:#e0e7ff;--dmt:#3730a3}
+:root[data-t=dark]{--bg:#10181d;--card:#18232a;--tx:#e8f0f4;--mut:#93a4ae;--f:#7c5e10;--d:#14532d;--w:#5b1f1f;--ln:#2a3a44;--qua:#065f46;--quat:#d1fae5;--dm:#312e81;--dmt:#e0e7ff}@media(prefers-color-scheme:dark){:root:not([data-t=light]){--bg:#10181d;--card:#18232a;--tx:#e8f0f4;--mut:#93a4ae;--f:#7c5e10;--d:#14532d;--w:#5b1f1f;--ln:#2a3a44;--qua:#065f46;--quat:#d1fae5;--dm:#312e81;--dmt:#e0e7ff}}
 *{box-sizing:border-box}body{margin:0;font:15px system-ui,sans-serif;background:var(--bg);color:var(--tx)}
 header{background:var(--pri);color:#fff;padding:12px 14px}header h1{margin:0;font-size:18px}header small{opacity:.85}
 nav{display:flex;gap:8px;padding:10px 12px}nav button{flex:1}
@@ -19,7 +19,7 @@ main{padding:0 12px 24px}.card{background:var(--card);border:1px solid var(--ln)
 input,select{padding:9px;border-radius:8px;border:1px solid var(--ln);background:var(--card);color:var(--tx);font-size:15px;width:100%}
 .w{overflow-x:auto;border:1px solid var(--ln);border-radius:12px;background:var(--card)}
 table{border-collapse:collapse;font-size:12px;width:max-content}th,td{border:1px solid var(--ln);padding:5px 0;min-width:34px;text-align:center}
-th{background:var(--card);position:sticky;top:0}th.qua{background:#d1fae5;color:#065f46}th.dom{background:#e0e7ff;color:#3730a3}
+th{background:var(--card);position:sticky;top:0}th.qua{background:var(--qua);color:var(--quat)}th.dom{background:var(--dm);color:var(--dmt)}
 .n{position:sticky;left:0;background:var(--card);min-width:132px;text-align:left;padding:5px 6px;white-space:nowrap;z-index:1}
 td.F{background:var(--f);font-weight:700}td.D{background:var(--d);font-weight:700}tr.sec td{background:var(--pri);color:#fff;text-align:left;padding:4px 8px;font-weight:700}
 tr.t td{font-weight:700;color:var(--mut)}.warn{background:var(--w);border-radius:10px;padding:8px 10px;margin:8px 0;font-size:13px}
@@ -29,8 +29,13 @@ small{color:var(--mut)}.lg span{display:inline-block;padding:2px 8px;border-radi
 .md{background:var(--bg);width:100%;max-width:560px;max-height:86vh;overflow:auto;border-radius:16px 16px 0 0;padding:14px}.md h3{margin:0 0 6px}
 .li{display:flex;justify-content:space-between;padding:8px 10px;border:1px solid var(--ln);border-radius:8px;margin:4px 0;background:var(--card)}.li.D,span.D{background:var(--d)}
 h4{margin:14px 0 4px;color:var(--pri)}td.n{cursor:pointer}@media print{.ov{display:none}}
+header{background:linear-gradient(135deg,#17aad6,#0D7EA4 55%,#085a78);box-shadow:0 4px 12px #0005}
+button{background:linear-gradient(180deg,#22b3e0,#0D7EA4 55%,#0a6a8a);box-shadow:0 4px 0 #07475c,0 7px 12px #0003;text-shadow:0 1px 1px #0004;transition:transform .08s,box-shadow .08s}
+button.sec{background:linear-gradient(180deg,var(--card),var(--bg));box-shadow:0 3px 0 var(--ln),0 6px 10px #0002;text-shadow:none}
+button:active{transform:translateY(3px);box-shadow:0 1px 0 #07475c,0 2px 4px #0003}button.sec:active{box-shadow:0 0 0 var(--ln)}
+.card{box-shadow:0 3px 0 var(--ln),0 8px 16px #0001}td.F{background:linear-gradient(180deg,#fff6,#0001),var(--f)}td.D{background:linear-gradient(180deg,#fff6,#0001),var(--d)}
 </style></head><body>
-<header><h1>🥬 Escala 5x2 FLV</h1><small>Folgas de domingo e da semana</small></header>
+<header style="display:flex;justify-content:space-between;align-items:center"><div><h1>🥬 Escala 5x2 FLV</h1><small>Folgas de domingo e da semana</small></div><button id="tm" class="sec" onclick="tema()" style="font-size:20px;padding:6px 12px"></button></header>
 <nav><button id="b1" onclick="go('escala')">📅 Escala</button><button id="b2" class="sec" onclick="go('equipe')">👥 Equipe</button></nav>
 <main id="app"></main>
 <script>
@@ -39,9 +44,9 @@ h4{margin:14px 0 4px;color:var(--pri)}td.n{cursor:pointer}@media print{.ov{displ
 const W=[3,1,4,1,1]; // Seg 3, Ter 1, Qua 4 (quarta verde), Qui 1, Sex 1
 const KEY='escala5x2_flv_v1',OLD='escala_domingo_flv_v1',CLOUD='https://escala-atacadao--escalaflv.replit.app/api/state';
 const NOMES=['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];
-let S={colabs:[],grid:{},inicio:'2026-11-23',semanas:5,inv:'',filtro:'Todos',edit:null,tab:'escala'};
+let S={colabs:[],grid:{},inicio:'2026-11-23',semanas:5,inv:'',tema:'',filtro:'Todos',edit:null,tab:'escala'};
 try{Object.assign(S,JSON.parse(localStorage.getItem(KEY)||'{}'))}catch(e){}
-const save=()=>{try{localStorage.setItem(KEY,JSON.stringify({colabs:S.colabs,grid:S.grid,inicio:S.inicio,semanas:S.semanas,inv:S.inv}))}catch(e){}};
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify({colabs:S.colabs,grid:S.grid,inicio:S.inicio,semanas:S.semanas,inv:S.inv,tema:S.tema}))}catch(e){}};
 const dt=s=>new Date(s+'T12:00:00');
 const iso=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 const add=(s,n)=>{const d=dt(s);d.setDate(d.getDate()+n);return iso(d)};
@@ -209,6 +214,9 @@ function xls(){const ds=dias(),cs=vis().sort(ord);
 function render(){
   document.getElementById('app').innerHTML=S.tab==='equipe'?vEquipe():vEscala();
   document.getElementById('b1').className=S.tab==='escala'?'on':'sec';document.getElementById('b2').className=S.tab==='equipe'?'on':'sec'}
-render();
+function escuro(){return S.tema==='dark'||(!S.tema&&matchMedia('(prefers-color-scheme:dark)').matches)}
+function aplicaTema(){const r=document.documentElement;S.tema?r.setAttribute('data-t',S.tema):r.removeAttribute('data-t');document.getElementById('tm').textContent=escuro()?'☀️':'🌙'}
+function tema(){S.tema=escuro()?'light':'dark';save();aplicaTema()}
+render();aplicaTema();
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script></body></html>
