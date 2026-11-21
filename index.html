@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0D7EA4">
+<title>Escala 5x2 FLV</title>
+<style>
+:root{--bg:#f4f7f9;--card:#fff;--tx:#1b2a33;--mut:#6b7c86;--pri:#0D7EA4;--f:#fde68a;--d:#bbf7d0;--w:#fee2e2;--ln:#dde5ea}
+@media(prefers-color-scheme:dark){:root{--bg:#10181d;--card:#18232a;--tx:#e8f0f4;--mut:#93a4ae;--f:#7c5e10;--d:#14532d;--w:#5b1f1f;--ln:#2a3a44}}
+*{box-sizing:border-box}body{margin:0;font:15px system-ui,sans-serif;background:var(--bg);color:var(--tx)}
+header{background:var(--pri);color:#fff;padding:12px 14px}header h1{margin:0;font-size:18px}header small{opacity:.85}
+nav{display:flex;gap:8px;padding:10px 12px}nav button{flex:1}
+button{background:var(--pri);color:#fff;border:0;border-radius:10px;padding:10px 12px;font-size:14px}
+button.sec{background:var(--card);color:var(--tx);border:1px solid var(--ln)}button.on{outline:2px solid #fff3}
+main{padding:0 12px 24px}.card{background:var(--card);border:1px solid var(--ln);border-radius:12px;padding:10px 12px;margin:8px 0}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:end;margin:8px 0}label{display:block;font-size:12px;color:var(--mut)}
+input,select{padding:9px;border-radius:8px;border:1px solid var(--ln);background:var(--card);color:var(--tx);font-size:15px;width:100%}
+.w{overflow-x:auto;border:1px solid var(--ln);border-radius:12px;background:var(--card)}
+table{border-collapse:collapse;font-size:12px;width:max-content}th,td{border:1px solid var(--ln);padding:5px 0;min-width:34px;text-align:center}
+th{background:var(--card);position:sticky;top:0}th.qua{background:#d1fae5;color:#065f46}th.dom{background:#e0e7ff;color:#3730a3}
+.n{position:sticky;left:0;background:var(--card);min-width:132px;text-align:left;padding:5px 6px;white-space:nowrap;z-index:1}
+td.F{background:var(--f);font-weight:700}td.D{background:var(--d);font-weight:700}tr.sec td{background:var(--pri);color:#fff;text-align:left;padding:4px 8px;font-weight:700}
+tr.t td{font-weight:700;color:var(--mut)}.warn{background:var(--w);border-radius:10px;padding:8px 10px;margin:8px 0;font-size:13px}
+small{color:var(--mut)}.lg span{display:inline-block;padding:2px 8px;border-radius:6px;margin-right:6px;font-size:12px}
+@media print{header,nav,.no{display:none}@page{size:landscape;margin:8mm}body{background:#fff}}
+</style></head><body>
+<header><h1>🥬 Escala 5x2 FLV</h1><small>Folgas de domingo e da semana</small></header>
+<nav><button id="b1" onclick="go('escala')">📅 Escala</button><button id="b2" class="sec" onclick="go('equipe')">👥 Equipe</button></nav>
+<main id="app"></main>
+<script>
+// ===== PARÂMETROS =====
+// Peso de cada dia (Seg..Sex): quanto maior, menos folgas o app coloca nesse dia.
+const W=[3,1,4,1,1]; // Seg 3, Ter 1, Qua 4 (quarta verde), Qui 1, Sex 1
+const KEY='escala5x2_flv_v1',OLD='escala_domingo_flv_v1',CLOUD='https://escala-atacadao--escalaflv.replit.app/api/state';
+const NOMES=['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];
+let S={colabs:[],grid:{},inicio:'2026-11-23',semanas:5,edit:null,tab:'escala'};
+try{Object.assign(S,JSON.parse(localStorage.getItem(KEY)||'{}'))}catch(e){}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify({colabs:S.colabs,grid:S.grid,inicio:S.inicio,semanas:S.semanas}))}catch(e){}};
+const dt=s=>new Date(s+'T12:00:00');
+const iso=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const add=(s,n)=>{const d=dt(s);d.setDate(d.getDate()+n);return iso(d)};
+const diff=(a,b)=>Math.round((dt(a)-dt(b))/864e5);
+const br=s=>s.slice(8)+'/'+s.slice(5,7);
+const uid=()=>Math.random().toString(36).slice(2,9);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const ord=(a,b)=>(b.cargo==='Encarregado')-(a.cargo==='Encarregado')||a.nome.localeCompare(b.nome,'pt-BR');
+const domOff=(c,dom)=>((Math.round(diff(dom,c.pd)/7)%2)+2)%2===0; // domingos alternados a partir do 1º domingo de folga
+const dias=()=>Array.from({length:7*S.semanas},(_,i)=>add(S.inicio,i));
+
+// ===== MOTOR DA ESCALA =====
+function gerar(){
+  S.inicio=document.getElementById('i_ini').value||S.inicio;
+  S.semanas=Math.max(1,Math.min(12,+document.getElementById('i_sem').value||5));
+  if(dt(S.inicio).getDay()!==1){alert('O início precisa ser uma segunda-feira.');return}
+  const cs=S.colabs.filter(c=>c.pd);
+  if(!cs.length){alert('Cadastre os colaboradores com o 1º domingo de folga.');return}
+  S.avisos=[];
+  for(let w=0;w<S.semanas;w++){
+    const seg=add(S.inicio,7*w),dom=add(seg,6),load={Abertura:[0,0,0,0,0],Fechamento:[0,0,0,0,0]};
+    cs.forEach(c=>{S.grid[c.id]=S.grid[c.id]||{};for(let i=0;i<7;i++)delete S.grid[c.id][add(seg,i)]});
+    const fx=cs.filter(c=>c.fixa),ot=cs.filter(c=>!c.fixa),r=w%(ot.length||1);
+    [...fx,...ot.slice(r),...ot.slice(0,r)].forEach(c=>{
+      const g=S.grid[c.id],sun=domOff(c,dom),k=sun?1:2;
+      let last=domOff(c,add(seg,-1))?-1:-3;
+      for(let i=1;i<=7;i++)if(g[add(seg,-i)]){last=-i;break}
+      const cand=[];
+      for(let a=0;a<5;a++){if(k===1)cand.push([a]);else for(let b=a+2;b<5;b++)cand.push([a,b])}
+      const ok=o=>{let p=last;for(const q of sun?[...o,6]:o){
+        if(q-p-1>5)return false;                                   // máx. 5 dias seguidos
+        if(q-p<2&&!(c.fixa&&q===0&&p===-1))return false;           // folgas não seguidas
+        p=q}return true};
+      const base=cand.filter(o=>!c.fixa||o.includes(0));
+      let pool=base.filter(ok);
+      if(!pool.length){S.avisos.push(c.nome+': sem opção que cumpra todas as regras na semana de '+br(seg));pool=base.length?base:cand}
+      const cost=o=>o.reduce((s,i)=>s+(load[c.turno][i]+1)*W[i],0);
+      const best=pool.reduce((a,b)=>cost(b)<cost(a)?b:a);
+      best.forEach(i=>{g[add(seg,i)]='F';load[c.turno][i]++});
+      if(sun)g[dom]='D';
+    });
+  }
+  save();render();
+}
+function problemas(){
+  const out=[],ds=dias();
+  S.colabs.forEach(c=>{const g=S.grid[c.id]||{};if(!Object.keys(g).length)return;
+    let run=0,prev=false;
+    ds.forEach((d,i)=>{const off=!!g[d];
+      if(off){run=0;if(prev&&!(c.fixa&&i%7===0&&g[add(d,-1)]==='D'))out.push(c.nome+': folgas seguidas em '+br(add(d,-1))+'–'+br(d))}
+      else{run++;if(run===6)out.push(c.nome+': 6 dias seguidos de trabalho até '+br(d))}
+      prev=off});
+    for(let w=0;w<S.semanas;w++){let n=0;for(let i=0;i<7;i++)if(g[add(S.inicio,7*w+i)])n++;
+      if(n!==2)out.push(c.nome+': '+n+' folga(s) na semana de '+br(add(S.inicio,7*w)))}
+  });
+  return [...(S.avisos||[]),...out];
+}
+function tg(id,d){const g=S.grid[id]=S.grid[id]||{};if(g[d]==='D')return;if(g[d])delete g[d];else g[d]='F';save();render()}
+function limpar(){if(confirm('Apagar a escala gerada?')){S.grid={};S.avisos=[];save();render()}}
+
+// ===== TELAS =====
+function go(t){S.tab=t;S.edit=null;render()}
+function vEscala(){
+  const ds=dias(),p=problemas();
+  const head='<tr><th class="n">Colaborador</th>'+ds.map(d=>{const i=(dt(d).getDay()+6)%7;return `<th class="${i==2?'qua':i==6?'dom':''}">${NOMES[i]}<br>${br(d)}</th>`}).join('')+'</tr>';
+  const body=['Abertura','Fechamento'].map(t=>{
+    const cs=S.colabs.filter(c=>c.turno===t).sort(ord);if(!cs.length)return'';
+    const rows=cs.map(c=>`<tr><td class="n">${esc(c.nome)}${c.cargo==='Encarregado'?' ★':''}${c.fixa?' 📌':''}</td>`+ds.map(d=>{const v=(S.grid[c.id]||{})[d]||'';return `<td class="${v}" onclick="tg('${c.id}','${d}')">${v}</td>`}).join('')+'</tr>').join('');
+    const tot=`<tr class="t"><td class="n">Folgas no dia</td>`+ds.map(d=>`<td>${cs.filter(c=>(S.grid[c.id]||{})[d]).length}</td>`).join('')+'</tr>';
+    return `<tr class="sec"><td colspan="${ds.length+1}">${t}</td></tr>`+rows+tot}).join('');
+  return `<div class="card no"><div class="row"><div style="flex:1"><label>Início (segunda-feira)</label><input type="date" id="i_ini" value="${S.inicio}"></div>
+  <div style="width:90px"><label>Semanas</label><input type="number" id="i_sem" min="1" max="12" value="${S.semanas}"></div></div>
+  <div class="row"><button onclick="gerar()">⚙️ Gerar escala</button><button class="sec" onclick="window.print()">🖨️ Imprimir</button><button class="sec" onclick="limpar()">🗑️ Limpar</button></div>
+  <small>Toque numa célula para ajustar uma folga (F). D = DSR no domingo. ★ encarregado, 📌 folga fixa na segunda.</small></div>
+  ${p.length?`<div class="warn no"><b>⚠️ Conferir:</b><br>${p.slice(0,12).map(esc).join('<br>')}${p.length>12?'<br>… e mais '+(p.length-12):''}</div>`:(Object.keys(S.grid).length?'<div class="card no">✅ Regras cumpridas em toda a escala.</div>':'')}
+  <div class="w"><table>${head}${body||''}</table></div>
+  <p class="lg"><span style="background:var(--f)">F folga</span><span style="background:var(--d)">D DSR (domingo)</span></p>`;
+}
+function vEquipe(){
+  const e=S.edit,sel=(v,o)=>o.map(x=>`<option${x===v?' selected':''}>${x}</option>`).join('');
+  const list=S.colabs.slice().sort(ord).map(c=>`<div class="card" onclick="ed('${c.id}')"><b>${esc(c.nome)}</b>${c.cargo==='Encarregado'?' ★':''}<br><small>${c.turno} · 1º domingo de folga: ${c.pd?br(c.pd)+(c.prov?' ⚠ provisório':''):'—'}${c.fixa?' · 📌 folga fixa na segunda':''}</small></div>`).join('');
+  const form=e?`<div class="card"><b>${e.id?'Editar':'Novo'} colaborador</b>
+  <label>Nome</label><input id="f_nome" value="${esc(e.nome||'')}">
+  <label>Cargo</label><select id="f_cargo">${sel(e.cargo||'Colaborador',['Colaborador','Encarregado'])}</select>
+  <label>Turno</label><select id="f_turno">${sel(e.turno||'Abertura',['Abertura','Fechamento'])}</select>
+  <label>Primeiro domingo de folga (DSR)</label><input type="date" id="f_pd" value="${e.pd||''}">
+  <label><input type="checkbox" id="f_fixa" style="width:auto"${e.fixa?' checked':''}> Folga fixa na segunda-feira</label>
+  <div class="row"><button onclick="sv()">Salvar</button><button class="sec" onclick="go('equipe')">Cancelar</button>${e.id?`<button class="sec" onclick="del('${e.id}')">Excluir</button>`:''}</div></div>`:'';
+  return `<div class="row no"><button onclick="ed()">➕ Novo</button><button class="sec" onclick="importar()">⬇️ Importar do app antigo</button></div>${form}${list||'<div class="card">Nenhum colaborador. Use “Importar do app antigo” ou cadastre.</div>'}`;
+}
+function ed(id){S.edit=id?{...S.colabs.find(c=>c.id===id)}:{};render()}
+function sv(){
+  const e=S.edit,v=i=>document.getElementById(i);
+  const c={id:e.id||uid(),nome:v('f_nome').value.trim(),cargo:v('f_cargo').value,turno:v('f_turno').value,pd:v('f_pd').value,fixa:v('f_fixa').checked,prov:false};
+  if(!c.nome){alert('Informe o nome.');return}
+  if(c.pd&&dt(c.pd).getDay()!==0){alert('O primeiro domingo de folga precisa cair num domingo.');return}
+  const i=S.colabs.findIndex(x=>x.id===c.id);i>=0?S.colabs[i]=c:S.colabs.push(c);save();go('equipe')}
+function del(id){if(confirm('Excluir colaborador?')){S.colabs=S.colabs.filter(c=>c.id!==id);delete S.grid[id];save();go('equipe')}}
+async function importar(){
+  let d=null;
+  try{d=JSON.parse(localStorage.getItem(OLD))}catch(e){}
+  if(!d||!(d.colaboradores||[]).length){try{d=await (await fetch(CLOUD)).json()}catch(e){}} // só leitura: este app nunca grava no app antigo
+  const l=((d&&d.colaboradores)||[]).filter(c=>c.status==='Ativo');
+  if(!l.length){alert('Não encontrei colaboradores no app antigo. Cadastre manualmente.');return}
+  const n={Abertura:0,Fechamento:0};
+  S.colabs=l.map(o=>{const fixa=/alan lima|josenilde/i.test(o.nome),t=o.turno==='Fechamento'?'Fechamento':'Abertura';
+    return{id:uid(),nome:o.nome,cargo:o.cargo==='Encarregado'?'Encarregado':'Colaborador',turno:t,fixa,
+      pd:fixa?'2026-11-29':(n[t]++%2?'2026-11-29':'2026-12-06'),prov:!fixa}});
+  S.grid={};save();go('equipe');
+  alert(S.colabs.length+' colaboradores importados, sem folgas. Os domingos marcados como provisórios precisam ser ajustados.')}
+function render(){
+  document.getElementById('app').innerHTML=S.tab==='equipe'?vEquipe():vEscala();
+  document.getElementById('b1').className=S.tab==='escala'?'on':'sec';document.getElementById('b2').className=S.tab==='equipe'?'on':'sec'}
+render();
+</script></body></html>
