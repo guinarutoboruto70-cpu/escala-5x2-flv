@@ -34,7 +34,7 @@ button{background:linear-gradient(180deg,#22b3e0,#0D7EA4 55%,#0a6a8a);box-shadow
 button.sec{background:linear-gradient(180deg,var(--card),var(--bg));box-shadow:0 3px 0 var(--ln),0 6px 10px #0002;text-shadow:none}
 button:active{transform:translateY(3px);box-shadow:0 1px 0 #07475c,0 2px 4px #0003}button.sec:active{box-shadow:0 0 0 var(--ln)}
 .card{box-shadow:0 3px 0 var(--ln),0 8px 16px #0001}td.F{background:linear-gradient(180deg,#fff6,#0001),var(--f)}td.D{background:linear-gradient(180deg,#fff6,#0001),var(--d)}
-</style></head><body>
+td.D{font-size:10px;font-weight:700}</style></head><body>
 <header style="display:flex;justify-content:space-between;align-items:center"><div><h1>🥬 Escala 5x2 FLV</h1><small>Folgas de domingo e da semana</small></div><button id="tm" class="sec" onclick="tema()" style="font-size:20px;padding:6px 12px"></button></header>
 <nav><button id="b1" onclick="go('escala')">📅 Escala</button><button id="b2" class="sec" onclick="go('equipe')">👥 Equipe</button></nav>
 <main id="app"></main>
@@ -67,8 +67,14 @@ function gerar(only){
   if(g$('i_sem'))S.semanas=Math.max(1,Math.min(12,+g$('i_sem').value||5));
   if(g$('i_inv'))S.inv=g$('i_inv').value;
   if(dt(S.inicio).getDay()!==1){alert('O início precisa ser uma segunda-feira.');return}
+  if(!S.colabs.length){alert('Cadastre ou importe os colaboradores.');return}
+  if(!only){
+    const sd=S.colabs.filter(c=>!c.pd);
+    if(sd.length){alert('Para gerar a escala, marque o primeiro DSR (domingo de folga) de cada colaborador. Faltam: '+sd.map(c=>c.nome).join(', ')+'.');return}
+    const pv=S.colabs.filter(c=>c.prov);
+    if(pv.length&&!confirm(pv.length+' colaborador(es) estão com domingo provisório (⚠). Gerar mesmo assim?'))return;
+  }
   const cs=S.colabs.filter(c=>c.pd);
-  if(!cs.length){alert('Cadastre os colaboradores com o domingo de folga.');return}
   const alvo=only?cs.filter(c=>c.id===only):cs;
   S.avisos=only?(S.avisos||[]):[];
   for(let w=0;w<S.semanas;w++){
@@ -110,28 +116,30 @@ function problemas(){
   });
   return [...(S.avisos||[]),...out];
 }
-function tg(id,d){const g=S.grid[id]=S.grid[id]||{};if(g[d]==='D')return;if(g[d])delete g[d];else g[d]='F';save();render()}
+function tg(id,d){const g=S.grid[id]=S.grid[id]||{};if(g[d]==='D')return;const wd=dt(d).getDay();if(wd===0||wd===6){alert('Folga da semana só de segunda a sexta. O domingo é o DSR, definido no cadastro do colaborador.');return}if(g[d])delete g[d];else g[d]='F';save();render()}
 function limpar(){if(confirm('Apagar a escala gerada?')){S.grid={};S.avisos=[];save();render()}}
 
 // ===== TELAS =====
 function go(t){S.tab=t;S.edit=null;render()}
 const chips=()=>`<div class="row no">${['Todos','Abertura','Fechamento'].map(t=>`<button class="${S.filtro===t?'':'sec'}" onclick="S.filtro='${t}';render()">${t}</button>`).join('')}</div>`;
+function aviso(){const f=S.colabs.filter(c=>!c.pd),v=S.colabs.filter(c=>c.prov);
+  return f.length||v.length?`<div class="warn no"><b>📌 Antes de gerar:</b> marque o <b>primeiro DSR</b> (domingo de folga) de cada colaborador. Toque no nome. O DSR é sempre no domingo.${f.length?'<br>Sem DSR: '+f.map(c=>esc(c.nome)).join(', ')+'.':''}${v.length?'<br>⚠ '+v.length+' com domingo provisório, confira.':''}</div>`:''}
 function vEscala(){
   const ds=dias(),p=problemas();
   const head='<tr><th class="n">Colaborador</th>'+ds.map(d=>{const i=(dt(d).getDay()+6)%7;return `<th class="${i==2?'qua':i==6?'dom':''}">${NOMES[i]}<br>${br(d)}${i==0&&isInv(d)?'<br>📦':''}</th>`}).join('')+'</tr>';
   const body=['Abertura','Fechamento'].filter(t=>S.filtro==='Todos'||S.filtro===t).map(t=>{
     const cs=S.colabs.filter(c=>c.turno===t).sort(ord);if(!cs.length)return'';
-    const rows=cs.map(c=>`<tr><td class="n" onclick="ver('${c.id}')">${esc(c.nome)}${c.cargo==='Encarregado'?' ★':''}${c.fixa?' 📌':''}</td>`+ds.map(d=>{const v=(S.grid[c.id]||{})[d]||'';return `<td class="${v}" onclick="tg('${c.id}','${d}')">${v}</td>`}).join('')+'</tr>').join('');
+    const rows=cs.map(c=>`<tr><td class="n" onclick="ver('${c.id}')">${esc(c.nome)}${c.cargo==='Encarregado'?' ★':''}${c.fixa?' 📌':''}</td>`+ds.map(d=>{const v=(S.grid[c.id]||{})[d]||'';return `<td class="${v}" onclick="tg('${c.id}','${d}')">${v==='D'?'DSR':v}</td>`}).join('')+'</tr>').join('');
     const tot=`<tr class="t"><td class="n">Folgas no dia</td>`+ds.map(d=>`<td>${cs.filter(c=>(S.grid[c.id]||{})[d]).length}</td>`).join('')+'</tr>';
     return `<tr class="sec"><td colspan="${ds.length+1}">${t}</td></tr>`+rows+tot}).join('');
   return `<div class="card no"><div class="row"><div style="flex:1"><label>Início (segunda-feira)</label><input type="date" id="i_ini" value="${S.inicio}"></div>
   <div style="width:90px"><label>Semanas</label><input type="number" id="i_sem" min="1" max="12" value="${S.semanas}"></div></div>
   <div class="row"><div style="flex:1"><label>📦 Uma segunda de inventário (repete a cada 2 segundas)</label><input type="date" id="i_inv" value="${S.inv||''}"></div></div>
-  <div class="row"><button onclick="gerar()">⚙️ Gerar escala</button><button class="sec" onclick="inv()">📦 Inventário</button><button class="sec" onclick="zap()">📲 WhatsApp</button><button class="sec" onclick="window.print()">📄 PDF / Imprimir</button><button class="sec" onclick="xls()">📊 Excel</button><button class="sec" onclick="limpar()">🗑️ Limpar</button></div>
-  <small>Toque no nome para ver domingos e folgas da pessoa; toque numa célula para ajustar a folga (F). D = DSR. ★ encarregado, 📌 folga fixa, 📦 inventário.</small></div>${chips()}
+  <div class="row"><button onclick="gerar()">⚙️ Gerar escala</button><button class="sec" onclick="inv()">📦 Inventário</button><button class="sec" onclick="zap()">📲 WhatsApp</button><button class="sec" onclick="window.print()">📄 PDF / Imprimir</button><button class="sec" onclick="xls()">📊 Excel</button><button class="sec" onclick="shareApp()">🔗 Compartilhar app</button><button class="sec" onclick="limpar()">🗑️ Limpar</button></div>
+  <small>Toque no nome para ver domingos e folgas da pessoa; toque numa célula para ajustar a folga (F). DSR = folga de domingo (só aos domingos). ★ encarregado, 📌 folga fixa, 📦 inventário.</small></div>${aviso()}${chips()}
   ${p.length?`<div class="warn no"><b>⚠️ Conferir:</b><br>${p.slice(0,12).map(esc).join('<br>')}${p.length>12?'<br>… e mais '+(p.length-12):''}</div>`:(Object.keys(S.grid).length?'<div class="card no">✅ Regras cumpridas em toda a escala.</div>':'')}
   <div class="w"><table>${head}${body||''}</table></div>
-  <p class="lg"><span style="background:var(--f)">F folga</span><span style="background:var(--d)">D DSR (domingo)</span></p>`;
+  <p class="lg"><span style="background:var(--f)">F folga</span><span style="background:var(--d)">DSR = folga de domingo</span></p>`;
 }
 function vEquipe(){
   const e=S.edit,sel=(v,o)=>o.map(x=>`<option${x===v?' selected':''}>${x}</option>`).join('');
@@ -144,7 +152,7 @@ function vEquipe(){
   <label>Primeiro domingo de folga (DSR)</label><input type="date" id="f_pd" value="${e.pd||''}">
   <label><input type="checkbox" id="f_fixa" style="width:auto"${e.fixa?' checked':''}> Folga fixa na segunda-feira</label>
   <div class="row"><button onclick="sv()">Salvar</button><button class="sec" onclick="go('equipe')">Cancelar</button>${e.id?`<button class="sec" onclick="del('${e.id}')">Excluir</button>`:''}</div></div>`:'';
-  return `<div class="row no"><button onclick="ed()">➕ Novo</button><button class="sec" onclick="importar()">⬇️ Importar do app antigo</button></div>${chips()}${form}${list||'<div class="card">Nenhum colaborador. Use “Importar do app antigo” ou cadastre.</div>'}`;
+  return `<div class="row no"><button onclick="ed()">➕ Novo</button><button class="sec" onclick="importar()">⬇️ Importar do app antigo</button><button class="sec" onclick="shareApp()">🔗 Compartilhar app</button></div>${chips()}${form}${list||'<div class="card">Nenhum colaborador. Use “Importar do app antigo” ou cadastre.</div>'}`;
 }
 function ed(id){S.edit=id?{...S.colabs.find(c=>c.id===id)}:{};render()}
 function sv(){
@@ -208,9 +216,12 @@ function zapGo(){const seg=add(S.inicio,7*+g$('z_w').value);
   window.open('https://wa.me/?text='+encodeURIComponent(t),'_blank')}
 function xls(){const ds=dias(),cs=vis().sort(ord);
   let h='<table border="1"><tr><th>Colaborador</th><th>Turno</th>'+ds.map(d=>`<th>${NOMES[(dt(d).getDay()+6)%7]} ${br(d)}</th>`).join('')+'</tr>';
-  cs.forEach(c=>{const g=S.grid[c.id]||{};h+=`<tr><td>${esc(c.nome)}</td><td>${c.turno}</td>`+ds.map(d=>`<td align="center"${g[d]?` bgcolor="${g[d]==='D'?'#bbf7d0':'#fde68a'}"`:''}>${g[d]||''}</td>`).join('')+'</tr>'});
+  cs.forEach(c=>{const g=S.grid[c.id]||{};h+=`<tr><td>${esc(c.nome)}</td><td>${c.turno}</td>`+ds.map(d=>`<td align="center"${g[d]?` bgcolor="${g[d]==='D'?'#bbf7d0':'#fde68a'}"`:''}>${g[d]==='D'?'DSR':(g[d]||'')}</td>`).join('')+'</tr>'});
   const b=new Blob(['\ufeff<html><head><meta charset="utf-8"></head><body>'+h+'</table></body></html>'],{type:'application/vnd.ms-excel'});
   const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='escala-5x2-'+S.inicio+'.xls';a.click()}
+function shareApp(){const u=location.href.split('?')[0].split('#')[0],t='Escala 5x2 FLV';
+  if(navigator.share)navigator.share({title:t,text:t+' – app de escala de folgas',url:u}).catch(()=>{});
+  else window.open('https://wa.me/?text='+encodeURIComponent(t+'\n'+u),'_blank')}
 function render(){
   document.getElementById('app').innerHTML=S.tab==='equipe'?vEquipe():vEscala();
   document.getElementById('b1').className=S.tab==='escala'?'on':'sec';document.getElementById('b2').className=S.tab==='equipe'?'on':'sec'}
