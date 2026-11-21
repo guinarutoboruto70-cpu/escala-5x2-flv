@@ -3,8 +3,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#0D7EA4">
 <link rel="manifest" href="manifest.json">
-<link rel="icon" href="icon-192.png">
-<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="icon-192.png?v=2">
+<link rel="apple-touch-icon" href="icon-192.png?v=2">
 <title>Escala 5x2 FLV</title>
 <style>
 :root{--bg:#f4f7f9;--card:#fff;--tx:#1b2a33;--mut:#6b7c86;--pri:#0D7EA4;--f:#fde68a;--d:#bbf7d0;--w:#fee2e2;--ln:#dde5ea;--qua:#d1fae5;--quat:#065f46;--dm:#e0e7ff;--dmt:#3730a3}
@@ -34,7 +34,7 @@ button{background:linear-gradient(180deg,#22b3e0,#0D7EA4 55%,#0a6a8a);box-shadow
 button.sec{background:linear-gradient(180deg,var(--card),var(--bg));box-shadow:0 3px 0 var(--ln),0 6px 10px #0002;text-shadow:none}
 button:active{transform:translateY(3px);box-shadow:0 1px 0 #07475c,0 2px 4px #0003}button.sec:active{box-shadow:0 0 0 var(--ln)}
 .card{box-shadow:0 3px 0 var(--ln),0 8px 16px #0001}td.F{background:linear-gradient(180deg,#fff6,#0001),var(--f)}td.D{background:linear-gradient(180deg,#fff6,#0001),var(--d)}
-td.D{font-size:10px;font-weight:700}</style></head><body>
+td.D{font-size:10px;font-weight:700}.pt{display:none}@media print{.pt{display:block;margin:0 0 6px}.w{overflow:visible;border:0}table{width:100%;font-size:8px}th,td{min-width:0;padding:2px 0}.n{position:static;min-width:80px;font-size:9px}td.D{font-size:7px}body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}</style></head><body>
 <header style="display:flex;justify-content:space-between;align-items:center"><div><h1>🥬 Escala 5x2 FLV</h1><small>Folgas de domingo e da semana</small></div><button id="tm" class="sec" onclick="tema()" style="font-size:20px;padding:6px 12px"></button></header>
 <nav><button id="b1" onclick="go('escala')">📅 Escala</button><button id="b2" class="sec" onclick="go('equipe')">👥 Equipe</button></nav>
 <main id="app"></main>
@@ -61,6 +61,8 @@ const dias=()=>Array.from({length:7*S.semanas},(_,i)=>add(S.inicio,i));
 // ===== MOTOR DA ESCALA =====
 const g$=id=>document.getElementById(id);
 const isInv=seg=>!!S.inv&&diff(seg,S.inv)%14===0; // a cada 2 segundas
+const confEnc=c=>c.cargo==='Encarregado'&&c.pd?S.colabs.find(x=>x.id!==c.id&&x.cargo==='Encarregado'&&x.pd&&Math.round(diff(x.pd,c.pd)/7)%2===0):null;
+const msgEnc=(c,o)=>'O DSR de '+c.nome+' cairia no mesmo domingo do encarregado '+o.nome+'. Os encarregados não podem folgar no mesmo domingo: escolha o domingo seguinte ou o anterior.';
 const vis=()=>S.colabs.filter(c=>S.filtro==='Todos'||c.turno===S.filtro);
 function gerar(only){
   if(g$('i_ini'))S.inicio=g$('i_ini').value||S.inicio;
@@ -69,6 +71,7 @@ function gerar(only){
   if(dt(S.inicio).getDay()!==1){alert('O início precisa ser uma segunda-feira.');return}
   if(!S.colabs.length){alert('Cadastre ou importe os colaboradores.');return}
   if(!only){
+    for(const c of S.colabs){const o=confEnc(c);if(o){alert(msgEnc(c,o));return}}
     const sd=S.colabs.filter(c=>!c.pd);
     if(sd.length){alert('Para gerar a escala, marque o primeiro DSR (domingo de folga) de cada colaborador. Faltam: '+sd.map(c=>c.nome).join(', ')+'.');return}
     const pv=S.colabs.filter(c=>c.prov);
@@ -81,8 +84,8 @@ function gerar(only){
     const seg=add(S.inicio,7*w),dom=add(seg,6),inv=isInv(seg),load={Abertura:[0,0,0,0,0],Fechamento:[0,0,0,0,0]};
     alvo.forEach(c=>{S.grid[c.id]=S.grid[c.id]||{};for(let i=0;i<7;i++)delete S.grid[c.id][add(seg,i)]});
     cs.forEach(c=>{const g=S.grid[c.id]||{};for(let i=0;i<5;i++)if(g[add(seg,i)])load[c.turno][i]++});
-    const fx=alvo.filter(c=>c.fixa),ot=alvo.filter(c=>!c.fixa),r=w%(ot.length||1);
-    [...fx,...ot.slice(r),...ot.slice(0,r)].forEach(c=>{
+    const en=alvo.filter(c=>c.cargo==='Encarregado'),fx=alvo.filter(c=>c.fixa&&c.cargo!=='Encarregado'),ot=alvo.filter(c=>!c.fixa&&c.cargo!=='Encarregado'),r=w%(ot.length||1);
+    [...en,...fx,...ot.slice(r),...ot.slice(0,r)].forEach(c=>{
       const g=S.grid[c.id],sun=domOff(c,dom),k=sun?1:2;
       let last=domOff(c,add(seg,-1))?-1:-3;
       for(let i=1;i<=7;i++)if(g[add(seg,-i)]){last=-i;break}
@@ -92,7 +95,8 @@ function gerar(only){
         if(q-p-1>5)return false;
         if(q-p<2&&!(c.fixa&&q===0&&p===-1))return false;
         p=q}return true};
-      const base=cand.filter(o=>!c.fixa||o.includes(0));
+      const outros=cs.filter(x=>x.cargo==='Encarregado'&&x.id!==c.id); // encarregados nunca folgam no mesmo dia
+      const base=cand.filter(o=>(!c.fixa||o.includes(0))&&(c.cargo!=='Encarregado'||o.every(i=>!outros.some(x=>(S.grid[x.id]||{})[add(seg,i)]))));
       let pool=base.filter(ok);
       if(!pool.length){S.avisos.push(c.nome+': sem opção que cumpra todas as regras na semana de '+br(seg));pool=base.length?base:cand}
       const cost=o=>o.reduce((s,i)=>s+(load[c.turno][i]+1)*W[i]*(inv&&i<2?3:1),0); // semana de inventário: evita folga seg/ter
@@ -114,6 +118,8 @@ function problemas(){
     for(let w=0;w<S.semanas;w++){let n=0;for(let i=0;i<7;i++)if(g[add(S.inicio,7*w+i)])n++;
       if(n!==2)out.push(c.nome+': '+n+' folga(s) na semana de '+br(add(S.inicio,7*w)))}
   });
+  const es=S.colabs.filter(c=>c.cargo==='Encarregado');
+  if(es.length>1)ds.forEach(d=>{if(es.filter(c=>(S.grid[c.id]||{})[d]).length>1)out.push('Encarregados folgando no mesmo dia: '+br(d))});
   return [...(S.avisos||[]),...out];
 }
 function tg(id,d){const g=S.grid[id]=S.grid[id]||{};if(g[d]==='D')return;const wd=dt(d).getDay();if(wd===0||wd===6){alert('Folga da semana só de segunda a sexta. O domingo é o DSR, definido no cadastro do colaborador.');return}if(g[d])delete g[d];else g[d]='F';save();render()}
@@ -135,9 +141,10 @@ function vEscala(){
   return `<div class="card no"><div class="row"><div style="flex:1"><label>Início (segunda-feira)</label><input type="date" id="i_ini" value="${S.inicio}"></div>
   <div style="width:90px"><label>Semanas</label><input type="number" id="i_sem" min="1" max="12" value="${S.semanas}"></div></div>
   <div class="row"><div style="flex:1"><label>📦 Uma segunda de inventário (repete a cada 2 segundas)</label><input type="date" id="i_inv" value="${S.inv||''}"></div></div>
-  <div class="row"><button onclick="gerar()">⚙️ Gerar escala</button><button class="sec" onclick="inv()">📦 Inventário</button><button class="sec" onclick="zap()">📲 WhatsApp</button><button class="sec" onclick="window.print()">📄 PDF / Imprimir</button><button class="sec" onclick="xls()">📊 Excel</button><button class="sec" onclick="shareApp()">🔗 Compartilhar app</button><button class="sec" onclick="limpar()">🗑️ Limpar</button></div>
+  <div class="row"><button onclick="gerar()">⚙️ Gerar escala</button><button class="sec" onclick="inv()">📦 Inventário</button><button class="sec" onclick="zap()">📲 WhatsApp</button><button class="sec" onclick="exp()">📤 Imprimir / PDF / Excel</button><button class="sec" onclick="shareApp()">🔗 Compartilhar app</button><button class="sec" onclick="limpar()">🗑️ Limpar</button></div>
   <small>Toque no nome para ver domingos e folgas da pessoa; toque numa célula para ajustar a folga (F). DSR = folga de domingo (só aos domingos). ★ encarregado, 📌 folga fixa, 📦 inventário.</small></div>${aviso()}${chips()}
   ${p.length?`<div class="warn no"><b>⚠️ Conferir:</b><br>${p.slice(0,12).map(esc).join('<br>')}${p.length>12?'<br>… e mais '+(p.length-12):''}</div>`:(Object.keys(S.grid).length?'<div class="card no">✅ Regras cumpridas em toda a escala.</div>':'')}
+  <h3 class="pt">Escala 5x2 FLV – ${S.filtro==='Todos'?'Abertura e Fechamento':S.filtro} · ${br(S.inicio)} a ${br(add(S.inicio,7*S.semanas-1))}</h3>
   <div class="w"><table>${head}${body||''}</table></div>
   <p class="lg"><span style="background:var(--f)">F folga</span><span style="background:var(--d)">DSR = folga de domingo</span></p>`;
 }
@@ -160,6 +167,7 @@ function sv(){
   const c={id:e.id||uid(),nome:v('f_nome').value.trim(),cargo:v('f_cargo').value,turno:v('f_turno').value,pd:v('f_pd').value,fixa:v('f_fixa').checked,prov:false};
   if(!c.nome){alert('Informe o nome.');return}
   if(c.pd&&dt(c.pd).getDay()!==0){alert('O primeiro domingo de folga precisa cair num domingo.');return}
+  {const o=confEnc(c);if(o){alert(msgEnc(c,o));return}}
   const i=S.colabs.findIndex(x=>x.id===c.id);i>=0?S.colabs[i]=c:S.colabs.push(c);save();go('equipe')}
 function del(id){if(confirm('Excluir colaborador?')){S.colabs=S.colabs.filter(c=>c.id!==id);delete S.grid[id];save();go('equipe')}}
 async function importar(){
@@ -182,11 +190,13 @@ const fm=()=>{const m=g$('m');if(m)m.remove()};
 const pes=id=>S.colabs.find(x=>x.id===id);
 function ver(id){const c=pes(id);
   M(`<h3>${esc(c.nome)}</h3><small>${c.turno}${c.cargo==='Encarregado'?' · Encarregado':''}${c.fixa?' · 📌 folga fixa na segunda':''}</small>
+  <label><input type="checkbox" id="v_enc" style="width:auto"${c.cargo==='Encarregado'?' checked':''}> ★ É encarregado (nunca folga no mesmo dia de outro encarregado)</label>
   <label>Domingo de folga (DSR)</label><input type="date" id="v_pd" value="${c.pd||''}">
   <div class="row"><button onclick="conc('${id}')">✔ Concluir</button><button class="sec" onclick="sem('${id}')">📅 Folgas da semana</button><button class="sec" onclick="fm();ed('${id}')">✏️ Editar cadastro</button></div>`)}
-function conc(id){const c=pes(id),v=g$('v_pd').value;
+function conc(id){const c=pes(id),v=g$('v_pd').value,cg=g$('v_enc').checked?'Encarregado':'Colaborador';
   if(!v||dt(v).getDay()!==0){alert('Escolha uma data que seja domingo.');return}
-  c.pd=v;c.prov=false;save();
+  const o=confEnc({...c,pd:v,cargo:cg});if(o){alert(msgEnc(c,o));return}
+  c.pd=v;c.cargo=cg;c.prov=false;save();
   if(Object.keys(S.grid[id]||{}).length)gerar(id); // refaz só essa pessoa
   doms(id)}
 function doms(id){const c=pes(id),ds=dias().filter(d=>dt(d).getDay()===0);
@@ -214,11 +224,41 @@ function zapGo(){const seg=add(S.inicio,7*+g$('z_w').value);
   for(let i=0;i<7;i++){const d=add(seg,i),n=vis().filter(c=>(S.grid[c.id]||{})[d]).sort(ord).map(c=>c.nome);
     t+=`\n*${NOMES[i]} ${br(d)}${i==6?' (DSR)':''}${i==0&&isInv(d)?' 📦':''}* – folgam: ${n.join(', ')||'ninguém'}`}
   window.open('https://wa.me/?text='+encodeURIComponent(t),'_blank')}
-function xls(){const ds=dias(),cs=vis().sort(ord);
+const lib=u=>new Promise((ok,no)=>{if(document.querySelector('script[src="'+u+'"]'))return ok();const e=document.createElement('script');e.src=u;e.onload=ok;e.onerror=no;document.head.appendChild(e)});
+const nomeT=t=>t==='Todos'?'Abertura e Fechamento':t;
+function exp(){M(`<h3>📤 Exportar escala</h3><label>Turno</label><select id="x_t">${['Todos','Abertura','Fechamento'].map(t=>`<option value="${t}"${t===S.filtro?' selected':''}>${t==='Todos'?'Os dois turnos':t}</option>`).join('')}</select>
+  <div class="row"><button onclick="saida('pdf',1)">📄 PDF · Compartilhar</button><button class="sec" onclick="saida('pdf',0)">📄 PDF · Baixar</button></div>
+  <div class="row"><button onclick="saida('xls',1)">📊 Excel · Compartilhar</button><button class="sec" onclick="saida('xls',0)">📊 Excel · Baixar</button></div>
+  <div class="row"><button class="sec" onclick="saida('print')">🖨️ Imprimir</button></div><small>Compartilhar abre o menu do celular (WhatsApp, e-mail etc.).</small>`)}
+function saida(f,share){const t=g$('x_t').value;
+  if(f==='print'){S.filtro=t;fm();render();setTimeout(()=>window.print(),300);return}
+  fm();f==='pdf'?pdf(t,share):xls(t,share)}
+function entrega(blob,name,share){
+  const f=new File([blob],name,{type:blob.type});
+  if(share&&navigator.canShare&&navigator.canShare({files:[f]}))return navigator.share({files:[f],title:name}).catch(()=>{});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();
+  if(share)alert('Seu aparelho não permite compartilhar o arquivo direto. Ele foi baixado: é só anexar no WhatsApp.')}
+function xls(t,share){const ds=dias(),cs=S.colabs.filter(c=>t==='Todos'||c.turno===t).sort((a,b)=>a.turno.localeCompare(b.turno)||ord(a,b));
   let h='<table border="1"><tr><th>Colaborador</th><th>Turno</th>'+ds.map(d=>`<th>${NOMES[(dt(d).getDay()+6)%7]} ${br(d)}</th>`).join('')+'</tr>';
-  cs.forEach(c=>{const g=S.grid[c.id]||{};h+=`<tr><td>${esc(c.nome)}</td><td>${c.turno}</td>`+ds.map(d=>`<td align="center"${g[d]?` bgcolor="${g[d]==='D'?'#bbf7d0':'#fde68a'}"`:''}>${g[d]==='D'?'DSR':(g[d]||'')}</td>`).join('')+'</tr>'});
-  const b=new Blob(['\ufeff<html><head><meta charset="utf-8"></head><body>'+h+'</table></body></html>'],{type:'application/vnd.ms-excel'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='escala-5x2-'+S.inicio+'.xls';a.click()}
+  cs.forEach(c=>{const g=S.grid[c.id]||{};h+=`<tr><td>${esc(c.nome)}${c.cargo==='Encarregado'?' ★':''}</td><td>${c.turno}</td>`+ds.map(d=>`<td align="center"${g[d]?` bgcolor="${g[d]==='D'?'#bbf7d0':'#fde68a'}"`:''}>${g[d]==='D'?'DSR':(g[d]||'')}</td>`).join('')+'</tr>'});
+  entrega(new Blob(['\ufeff<html><head><meta charset="utf-8"></head><body>'+h+'</table></body></html>'],{type:'application/vnd.ms-excel'}),'escala-5x2-'+S.inicio+'.xls',share)}
+async function pdf(t,share){
+  try{await lib('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');await lib('https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js')}
+  catch(e){alert('Não consegui carregar o gerador de PDF (precisa de internet). Use Imprimir e escolha Salvar como PDF.');return}
+  const doc=new window.jspdf.jsPDF({orientation:'landscape',unit:'mm',format:'a4'}),ds=dias();
+  for(let k=0;k*35<ds.length;k++){
+    const dk=ds.slice(k*35,k*35+35);if(k)doc.addPage();
+    doc.setFontSize(13);doc.text('Escala 5x2 FLV - '+nomeT(t)+'  ('+br(dk[0])+' a '+br(dk[dk.length-1])+')',10,10);
+    const body=[];
+    ['Abertura','Fechamento'].filter(x=>t==='Todos'||t===x).forEach(x=>{
+      const cs=S.colabs.filter(c=>c.turno===x).sort(ord);if(!cs.length)return;
+      body.push([{content:x,colSpan:dk.length+1,styles:{fillColor:[13,126,164],textColor:255,halign:'left',fontStyle:'bold'}}]);
+      cs.forEach(c=>body.push([c.nome+(c.cargo==='Encarregado'?' *':''),...dk.map(d=>{const v=(S.grid[c.id]||{})[d]||'';return v==='D'?'DSR':v})]))});
+    doc.autoTable({startY:14,head:[['Colaborador',...dk.map(d=>NOMES[(dt(d).getDay()+6)%7]+'\n'+br(d)+(dt(d).getDay()===1&&isInv(d)?'\nINV':''))]],body,theme:'grid',
+      styles:{fontSize:6.5,cellPadding:1,halign:'center',valign:'middle',lineWidth:.1},headStyles:{fillColor:[236,241,244],textColor:30},columnStyles:{0:{halign:'left',cellWidth:38}},
+      didParseCell:h=>{if(h.section==='body'&&h.column.index>0){const v=h.cell.raw;if(v==='F')h.cell.styles.fillColor=[253,230,138];if(v==='DSR'){h.cell.styles.fillColor=[187,247,208];h.cell.styles.fontStyle='bold'}}}});
+    doc.setFontSize(7);doc.text('F = folga da semana   DSR = folga de domingo   * encarregado   INV = inventário',10,doc.internal.pageSize.getHeight()-6)}
+  entrega(doc.output('blob'),'escala-5x2-'+S.inicio+'.pdf',share)}
 function shareApp(){const u=location.href.split('?')[0].split('#')[0],t='Escala 5x2 FLV';
   if(navigator.share)navigator.share({title:t,text:t+' – app de escala de folgas',url:u}).catch(()=>{});
   else window.open('https://wa.me/?text='+encodeURIComponent(t+'\n'+u),'_blank')}
