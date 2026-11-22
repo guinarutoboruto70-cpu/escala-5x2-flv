@@ -444,7 +444,6 @@ function migrarLegado(){
 }
 if(S.mv!==1){S.mv=1;const r=mesSemanas(S.inicio.slice(0,7));if(r){S.inicio=r.inicio;S.semanas=r.semanas}}
 migrarLegado();
-if(!S.perfil&&(S.colabs.length||Object.keys(S.grid||{}).length)){S.perfil='setor';S.setor='FLV';save()}
 render();aplicaTema();
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script></body></html>
