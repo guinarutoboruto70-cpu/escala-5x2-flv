@@ -223,13 +223,17 @@ function M(h){let m=g$('m'),o=m&&m.querySelector('.md'),st=o?o.scrollTop:0;
 const fm=()=>{const m=g$('m');if(m)m.remove()};
 const pes=id=>S.colabs.find(x=>x.id===id);
 function ver(id){const c=pes(id);
-  M(`<h3>${esc(c.nome)}</h3><small>${c.turno}${c.cargo==='Encarregado'?' · Encarregado':''}${fd(c)>=0?' · 📌 folga fixa: '+NOMES[fd(c)]:''}</small>
-  <label><input type="checkbox" id="v_enc" style="width:auto"${c.cargo==='Encarregado'?' checked':''}> ★ É encarregado (nunca folga no mesmo dia de outro encarregado)</label>
-  <label>Domingo ${br(refDom())}</label><select id="v_dom">${domOpts(c)}</select>
-  <label>Folga fixa na semana</label><select id="v_fd">${fdOpts(c)}</select>
-  <label>Última folga da semana antes de ${br(START)}</label><input type="date" id="v_ult" value="${c.ult||''}">
-  <label>Último DSR (domingo) antes de ${br(START)}</label><input type="date" id="v_ultd" value="${c.ultd||''}">
-  <div class="row"><button onclick="conc('${id}')">✔ Concluir</button><button class="sec" onclick="sem('${id}')">📅 Folgas da semana</button><button class="sec" onclick="fm();ed('${id}')">✏️ Editar cadastro</button></div>`)}
+  M(`<h3 style="margin-bottom:2px">${esc(c.nome)}</h3><small>${c.turno}${c.cargo==='Encarregado'?' · Encarregado':''}${fd(c)>=0?' · 📌 folga fixa: '+NOMES[fd(c)]:''}</small>
+  <div class="card" style="margin-top:12px"><h4 style="margin-top:0">Configuração principal</h4>
+    <label><input type="checkbox" id="v_enc" style="width:auto"${c.cargo==='Encarregado'?' checked':''}> ★ É encarregado</label><small>Encarregados não folgam no mesmo dia.</small>
+    <label style="margin-top:12px">Domingo ${br(refDom())}</label><select id="v_dom">${domOpts(c)}</select><small>Define o primeiro domingo de trabalho ou DSR; os próximos domingos alternam.</small>
+    <label style="margin-top:12px">Folga fixa na semana</label><select id="v_fd">${fdOpts(c)}</select><small>Use somente se a pessoa sempre folga no mesmo dia.</small>
+  </div>
+  <details class="card" style="margin-top:10px"><summary style="cursor:pointer;font-weight:700;color:var(--pri)">🗓️ Dados anteriores ao início da escala</summary><small style="display:block;margin:8px 0">Esses dados ajudam a evitar mais de cinco dias seguidos de trabalho nas primeiras semanas e a manter o intervalo entre DSRs.</small>
+    <label>Última folga da semana antes de ${br(START)}</label><input type="date" id="v_ult" value="${c.ult||''}">
+    <label style="margin-top:10px">Último DSR antes de ${br(START)}</label><input type="date" id="v_ultd" value="${c.ultd||''}">
+  </details>
+  <div class="row" style="margin-top:14px"><button onclick="conc('${id}')">✔ Concluir</button><button class="sec" onclick="sem('${id}')">📅 Folgas da semana</button><button class="sec" onclick="fm();ed('${id}')">✏️ Editar cadastro</button></div>`)}
 function conc(id){const c=pes(id),v=domPd(g$('v_dom').value),cg=g$('v_enc').checked?'Encarregado':'Colaborador';
   const o=confEnc({...c,pd:v,cargo:cg});if(o){alert(msgEnc(c,o));return}
   const uv=g$('v_ult').value,dv=g$('v_ultd').value,er=valUlt(c.nome,uv,dv,v);if(er){alert(er);return}c.ult=uv;c.ultd=dv;const fv=g$('v_fd').value;c.fd=fv===''?'':+fv;delete c.fixa;c.pd=v;c.cargo=cg;c.prov=false;if(!v)delete S.grid[id];save();
