@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#085a78">
+<title>Escala 5x2 · Guia rápido</title>
+<style>
+:root{--b:#0D7EA4;--d:#085a78;--y:#fde68a;--g:#bbf7d0}
+*{box-sizing:border-box;margin:0}
+body{font:17px/1.4 system-ui,sans-serif;background:linear-gradient(160deg,#17aad6,#0D7EA4 45%,#062f40);color:#fff;height:100dvh;overflow:hidden}
+#bar{position:fixed;top:0;left:0;right:0;height:5px;background:#fff3;z-index:5}#bar i{display:block;height:100%;width:0;background:var(--y);transition:width .4s}
+.sl{position:absolute;inset:0;padding:30px 22px 128px;display:flex;flex-direction:column;align-items:center;overflow-y:auto;opacity:0;pointer-events:none;transform:translateX(40px);transition:opacity .4s,transform .4s}
+.sl.on{opacity:1;pointer-events:auto;transform:none}.sl.out{transform:translateX(-40px)}
+.sl>*{width:100%;max-width:380px}
+h2{font-size:26px;margin:6px 0 4px;text-align:center}
+.cover{justify-content:center;text-align:center}
+.logo{width:120px;height:120px;margin:0 auto 18px;border-radius:32px;background:#fff;color:var(--b);display:grid;place-items:center;font-size:46px;font-weight:800;box-shadow:0 8px 0 var(--d),0 16px 30px #0006}
+.on .logo{animation:pop 1s ease-out}
+@keyframes pop{0%{transform:scale(.3) rotate(-15deg);opacity:0}60%{transform:scale(1.1)}100%{transform:none;opacity:1}}
+.cover h2{font-size:38px}.cover p{opacity:.9;margin-top:6px}
+.sw{margin-top:26px;font-size:15px;opacity:.9;animation:nudge 1.4s infinite}
+@keyframes nudge{50%{transform:translateX(10px)}}
+.mock{background:#fff;color:#1b2a33;border-radius:18px;padding:14px;margin:12px auto;box-shadow:0 10px 24px #0005;display:flex;flex-wrap:wrap;gap:12px;justify-content:center;align-items:center}
+.btn{position:relative;display:inline-block;background:var(--b);color:#fff;border-radius:10px;padding:10px 14px;font-weight:700;font-size:15px}
+.btn.s{background:#fff;color:#1b2a33;border:1px solid #dde5ea}
+.btn.p::after{content:"";position:absolute;inset:-6px;border:3px solid #f59e0b;border-radius:15px;opacity:0}
+.on .btn.p::after{animation:ring 1.5s ease-out infinite;animation-delay:var(--t,.8s)}
+@keyframes ring{0%{opacity:1;transform:scale(.88)}100%{opacity:0;transform:scale(1.25)}}
+.f{position:absolute;right:-8px;bottom:-22px;font-size:26px;opacity:0}
+.on .f{animation:tap 1.5s infinite;animation-delay:var(--t,.8s)}
+@keyframes tap{0%{opacity:0;transform:translateY(14px)}30%{opacity:1}60%{transform:translateY(0)}100%{opacity:0}}
+.row{width:100%;padding:9px 12px;border-radius:10px;background:#f4f7f9;font-size:15px;position:relative}
+.st{display:flex;gap:11px;align-items:flex-start;margin:9px 0;opacity:0;transform:translateY(14px)}
+.on .st{animation:in .5s forwards;animation-delay:calc(var(--i)*.55s + .3s)}
+@keyframes in{to{opacity:1;transform:none}}
+.n{flex:none;width:28px;height:28px;border-radius:50%;background:var(--y);color:var(--d);font-weight:800;display:grid;place-items:center;font-size:15px}
+.nt{font-size:14.5px;opacity:.9;margin-top:10px;text-align:center}
+.g{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;width:100%;font-size:11px;text-align:center}
+.g b{color:#6b7c86}.g i{font-style:normal;height:24px;border-radius:6px;background:#e8eef2;display:grid;place-items:center;font-weight:700;color:#1b2a33}
+.on .g i.F,.on .g i.D{animation:fill .35s forwards;animation-delay:calc(var(--k)*.15s + 2s)}
+@keyframes fill{from{transform:scale(.4)}to{transform:none;background:var(--y)}}.on .g i.D{animation-name:fillD}
+@keyframes fillD{from{transform:scale(.4)}to{transform:none;background:var(--g)}}
+.go{display:block;text-align:center;margin-top:14px;background:var(--y);color:var(--d);font-weight:800;border-radius:14px;padding:14px;text-decoration:none;box-shadow:0 5px 0 #c9a227}
+nav{position:fixed;left:0;right:0;bottom:0;padding:8px 16px calc(10px + env(safe-area-inset-bottom));background:#062f40ee;z-index:5;text-align:center}
+nav div{display:flex;align-items:center;justify-content:space-between;max-width:380px;margin:0 auto}
+nav button{background:var(--y);color:var(--d);border:0;border-radius:12px;font-size:20px;font-weight:800;width:64px;height:44px}nav button:disabled{opacity:.3}
+#dots{display:flex;gap:8px}#dots i{width:9px;height:9px;border-radius:50%;background:#fff4;transition:.3s}#dots i.on{background:var(--y);transform:scale(1.4)}
+.cr{font-size:10.5px;opacity:.75;margin-top:6px;line-height:1.35}
+@media(prefers-reduced-motion:reduce){*{animation-duration:.01s!important;animation-delay:0s!important;transition-duration:.01s!important}}
+</style></head><body>
+<div id="bar"><i></i></div><main id="m"></main>
+<nav><div><button id="pv" aria-label="Voltar">←</button><span id="dots"></span><button id="nx" aria-label="Avançar">→</button></div>
+<div class="cr">Desenvolvido por William Jesus<br>© 2026 · Todos os direitos reservados</div></nav>
+<script>
+const st=(i,t)=>`<div class="st" style="--i:${i}"><span class="n">${i}</span><span>${t}</span></div>`;
+const b=(t,o='',a='')=>`<span class="btn ${o}"${a}>${t}${o.includes('p')?'<b class="f">👆</b>':''}</span>`;
+const pat=['F..F..D','.F..F..','..F.F.D','F...F..'];
+const grid=()=>{let k=0;return '<div class="mock"><div class="g">'+['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'].map(d=>`<b>${d}</b>`).join('')+pat.map(r=>[...r].map(c=>c=='.'?'<i></i>':`<i class="${c}" style="--k:${k++}">${c=='D'?'DSR':'F'}</i>`).join('')).join('')+'</div></div>'};
+const S=[
+`<div class="cover"><div class="logo">5x2</div><h2>Escala 5x2</h2><p>Guia rápido: como instalar e usar</p><div class="sw">Deslize ou toque em → </div></div>`,
+`<h2>📲 Instalar no celular</h2><div class="mock" style="flex-direction:column;align-items:stretch"><div class="row" style="display:flex;justify-content:space-between;align-items:center">guinarutoboruto70-cpu.github.io ${b('⋮','s p')}</div><div class="row" style="--t:2s">Nova guia</div><div class="row" style="background:#e0f2fe;display:flex;justify-content:space-between;--t:2s">Instalar app ${b('✔','p')}</div></div>${st(1,'Abra o link do app no <b>Chrome</b>.')}${st(2,'Toque nos <b>três pontinhos ⋮</b> no canto da tela.')}${st(3,'Toque em <b>Instalar app</b>.')}<div class="nt">iPhone (Safari): <b>Compartilhar</b> → <b>Adicionar à Tela de Início</b>.<br>Não conseguiu instalar? Tudo bem: o app funciona direto pelo link.</div>`,
+`<h2>👤 Escolher o perfil</h2><div class="mock" style="flex-direction:column">${b('👤 Encarregado de setor','p')}${b('👥 Gerente','s')}</div>${st(1,'Toque no seu perfil: <b>Encarregado de setor</b> ou <b>Gerente</b>.')}${st(2,'No primeiro acesso, digite o <b>nome do setor</b>.')}${st(3,'Para trocar de perfil, toque em <b>🚪 Sair</b>, no topo.')}`,
+`<h2>👥 Cadastrar a equipe</h2><div class="mock">${b('📅 Escala','s')}${b('👥 Equipe','p')}${b('➕ Novo','p',' style="--t:2s"')}</div>${st(1,'Abra a aba <b>Equipe</b> e toque em <b>➕ Novo</b>.')}${st(2,'Preencha <b>nome</b>, <b>turno</b> e o <b>domingo</b>: Trabalha ou DSR (folga).')}${st(3,'Use <b>Folga fixa</b> só para quem folga sempre no mesmo dia.')}`,
+`<h2>⚙️ Gerar a escala</h2><div class="mock">${b('📅 Domingo','s p')}${b('⚙️ Gerar escala','p',' style="--t:1.6s"')}</div>${grid()}${st(1,'Toque em <b>📅 Domingo</b> e marque quem trabalha e quem fica de DSR.')}${st(2,'Toque em <b>⚙️ Gerar escala</b>.')}${st(3,'Para ajustar, use <b>✏️ Editar escala</b>.')}${st(4,'O quadro <b>⚠️ Conferir</b> avisa se alguma regra falhou.')}`,
+`<h2>💾 Enviar e proteger</h2><div class="mock">${b('📲 WhatsApp','s')}${b('📤 PDF / Excel','s')}${b('⬇️ Baixar backup','p')}</div>${st(1,'<b>WhatsApp</b> envia a semana para a equipe.')}${st(2,'<b>PDF / Excel</b> exporta a escala.')}${st(3,'Baixe o <b>backup</b> de vez em quando e guarde fora do celular.')}<a class="go" href="./">Abrir o app →</a>`
+];
+const m=document.getElementById('m'),dots=document.getElementById('dots'),pv=document.getElementById('pv'),nx=document.getElementById('nx');
+S.forEach((h,i)=>{const s=document.createElement('section');s.className='sl';s.innerHTML=h;m.appendChild(s);dots.appendChild(document.createElement('i'))});
+let c=-1;const L=[...m.children],D=[...dots.children];
+function go(n){n=Math.max(0,Math.min(S.length-1,n));if(n===c)return;L.forEach((s,i)=>{s.classList.toggle('on',i===n);s.classList.toggle('out',i<n)});D.forEach((d,i)=>d.classList.toggle('on',i===n));
+ document.querySelector('#bar i').style.width=((n+1)/S.length*100)+'%';pv.disabled=n===0;nx.disabled=n===S.length-1;L[n].scrollTop=0;c=n}
+pv.onclick=()=>go(c-1);nx.onclick=()=>go(c+1);
+document.addEventListener('keydown',e=>{if(e.key==='ArrowRight')go(c+1);if(e.key==='ArrowLeft')go(c-1)});
+let x0=null;document.addEventListener('touchstart',e=>{x0=e.touches[0].clientX},{passive:true});
+document.addEventListener('touchend',e=>{if(x0===null)return;const d=e.changedTouches[0].clientX-x0;x0=null;if(Math.abs(d)>60)go(c+(d<0?1:-1))});
+go(0);
+</script></body></html>
