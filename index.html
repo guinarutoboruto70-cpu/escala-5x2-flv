@@ -175,12 +175,24 @@ function escolherPerfil(p){S.perfilTemp=p;render()}
 function confirmarInicio(){const n=(g$('inicio_nome')?.value||'').trim();if(!n){alert('Informe o nome do setor ou ambiente.');return}S.perfil=S.perfilTemp;S.setor=n;S.perfilTemp='';S.tab='escala';ENTROU=true;iniciaS();save();aplicaTema();render()}
 function editarAmbiente(){const n=prompt(S.perfil==='gerente'?'Nome do ambiente gerencial:':'Nome do setor:',S.setor||'');if(n&&n.trim()){S.setor=n.trim();save();render()}}
 function aplicaIdentidade(){const t=g$('tituloApp'),sub=g$('subtituloApp');if(!t)return;t.textContent=S.perfil?('🥬 Escala 5x2 — '+(S.setor||'Setor')):'🥬 Escala 5x2';if(sub)sub.textContent=S.perfil==='gerente'?'Escala gerencial de encarregados':'Folgas de domingo e da semana'}
+const TUTK='escala5x2_tut_v1';
+const TUT=[
+['📲','Instalar no celular','<b>Android (Chrome):</b> abra o link do app, toque nos três pontinhos (⋮) e escolha <b>Instalar app</b> ou <b>Adicionar à tela inicial</b>.<br><br><b>iPhone (Safari):</b> toque em <b>Compartilhar</b> (quadrado com seta) e depois em <b>Adicionar à Tela de Início</b>.<br><br>O ícone 🥬 aparece na tela do celular, como um app comum.'],
+['👤','Escolher o perfil','Na tela inicial, toque em <b>Encarregado de setor</b> ou <b>Gerente</b>. Cada perfil tem seus próprios dados, guardados no seu celular.<br><br>No primeiro acesso, informe o nome do setor. Para trocar de perfil, toque em <b>🚪 Sair</b>, no topo da tela.'],
+['👥','Cadastrar a equipe','Na aba <b>👥 Equipe</b>, toque em <b>➕ Novo</b> e preencha nome, turno e o domingo (<b>Trabalha</b> ou <b>DSR</b>).<br><br>Use <b>folga fixa</b> só para quem folga sempre no mesmo dia da semana. Toque no nome de uma pessoa para ver os domingos e as folgas dela.'],
+['⚙️','Gerar a escala','Na aba <b>📅 Escala</b>:<br>1. Toque em <b>📅 Domingo</b> e marque quem trabalha e quem fica de DSR.<br>2. Se quiser, preencha <b>🗓️ Últimas folgas</b>.<br>3. Toque em <b>⚙️ Gerar escala</b>.<br><br>Para ajustar, use <b>✏️ Editar escala</b> e toque nas células. O quadro <b>⚠️ Conferir</b> avisa se alguma regra não foi cumprida.'],
+['💾','Enviar e proteger','Use <b>📲 WhatsApp</b> para mandar a semana e <b>📤 Imprimir / PDF / Excel</b> para exportar.<br><br>Na tela inicial, toque em <b>⬇️ Baixar backup</b> de vez em quando e guarde o arquivo fora do celular. Para recuperar, toque em <b>📥 Restaurar backup</b>.']
+];
+function tut(i){
+  i=Math.max(0,Math.min(TUT.length-1,i));const x=TUT[i],ult=i===TUT.length-1;
+  M(`<div style="text-align:center;font-size:44px">${x[0]}</div><h3 style="text-align:center">${x[1]}</h3><div class="card" style="line-height:1.55">${x[2]}</div><div style="text-align:center;margin:8px 0;color:var(--pri)">${TUT.map((_,k)=>k===i?'●':'○').join(' ')}</div><div class="row">${i?`<button class="sec" onclick="tut(${i-1})">← Voltar</button>`:''}${ult?'<button onclick="fm()">✔ Entendi</button>':`<button onclick="tut(${i+1})">Próximo →</button>`}</div>`)}
 function infoPerfil(p){let d=null;try{d=JSON.parse(localStorage.getItem(p==='gerente'?KEYG:KEY0)||'null')}catch(e){}
   return d&&((d.colabs||[]).length||Object.keys(d.grid||{}).length||d.perfil)?d:null}
 function vEntrada(){
   const bt=(p,ic,tt,sub)=>{const d=infoPerfil(p);return `<button class="start-choice" onclick="abrir('${p}')"><span>${ic}</span><b>${tt}</b><small>${d?'Entrar'+(d.setor?' — '+esc(d.setor):'')+' · '+(d.colabs||[]).length+' pessoa(s)':'Primeiro acesso: '+sub}</small></button>`};
   return `<div class="start"><div class="start-box"><div class="start-logo">🥬</div><h2>Escala 5x2</h2><p>Escolha como vai usar o app. Cada perfil tem seus próprios dados, guardados neste aparelho.</p>
   <div class="start-choices">${bt('setor','👤','Encarregado de setor','cadastre sua equipe')}${bt('gerente','👥','Gerente','cadastre os encarregados')}</div>
+  <div class="row" style="justify-content:center;margin-top:14px"><button class="sec" onclick="tut(0)">📖 Como instalar e usar</button></div>
   <h4 style="margin-top:22px">💾 Backup dos dados</h4><small style="display:block">Salva os dois perfis (equipe, escala e histórico) em um arquivo. Faça de vez em quando e antes de mudar o app.</small>
   <div class="row" style="justify-content:center;margin-top:10px"><button onclick="backup(1)">📤 Compartilhar backup</button><button class="sec" onclick="backup(0)">⬇️ Baixar backup</button><button class="sec" onclick="g$('bk_file').click()">📥 Restaurar backup</button></div>
   <input type="file" id="bk_file" accept=".json,application/json" style="display:none" onchange="restaurar(this)"></div></div>`
@@ -461,6 +473,6 @@ function migrarLegado(){
   Object.entries(S.grid||{}).forEach(([id,g])=>{Object.entries(g||{}).forEach(([d,v])=>{if(d>=START&&d<S.inicio){r.grid[id]=r.grid[id]||{};r.grid[id][d]=v;achou=true}})});
   if(achou){S.historico.push(r);save()}
 }
-render();aplicaTema();
+render();aplicaTema();try{if(!localStorage.getItem(TUTK)){localStorage.setItem(TUTK,'1');tut(0)}}catch(e){}
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script></body></html>
