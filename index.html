@@ -170,8 +170,8 @@ function vEscala(){
     const rows=cs.map(c=>`<tr><td class="n" onclick="ver('${c.id}')">${esc(c.nome)}${c.cargo==='Encarregado'?' ★':''}${fd(c)>=0?' 📌':''}</td>`+ds.map(d=>{const v=(S.grid[c.id]||{})[d]||'';return `<td class="${v}" onclick="tg('${c.id}','${d}')">${v==='D'?'DSR':v}</td>`}).join('')+'</tr>').join('');
     const tot=`<tr class="t"><td class="n">Folgas no dia</td>`+ds.map(d=>`<td>${cs.filter(c=>(S.grid[c.id]||{})[d]).length}</td>`).join('')+'</tr>';
     return `<tr class="sec"><td colspan="${ds.length+1}">${t}</td></tr>`+rows+tot}).join('');
-  return `<div class="card no"><div class="row"><div style="flex:1"><label>Mês da escala</label><input type="month" id="i_mes" value="${S.inicio.slice(0,7)}" onchange="setMes(this.value)"></div></div>
-  <small>Mostra e gera as semanas (segunda a domingo) cuja segunda-feira cai no mês: ${br(S.inicio)} a ${br(add(S.inicio,7*S.semanas-1))}.</small>
+  return `<div class="card no"><div class="row"><div style="flex:1"><label>Mês de referência do ciclo</label><input type="month" id="i_mes" value="${S.inicio.slice(0,7)}" onchange="setMes(this.value)"></div></div>
+  <small>O app gera um ciclo fixo de 4 semanas, sempre de segunda a domingo: ${br(S.inicio)} a ${br(add(S.inicio,7*S.semanas-1))}. O ciclo seguinte começa 28 dias depois.</small>
   <div class="row"><div style="flex:1"><label>📦 Uma segunda de inventário (repete a cada 2 segundas)</label><input type="date" id="i_inv" value="${S.inv||''}"></div></div>
   <div class="row"><label style="width:100%">Máximo de folgas por dia em cada turno <small>(regra do Fechamento e limite de segurança da Abertura)</small></label>${[0,1,2,3,4].map(i=>`<div style="width:56px"><label>${NOMES[i]}</label><input type="number" min="0" max="20" id="cap${i}" value="${S.cap[i]}"></div>`).join('')}</div><div class="row"><label style="width:100%">Quantidade desejada de folgas na Abertura <small>(0 = sem meta; terça e quarta começam com 3)</small></label>${[0,1,2,3,4].map(i=>`<div style="width:56px"><label>${NOMES[i]}</label><input type="number" min="0" max="20" id="alvoA${i}" value="${S.alvoA[i]||0}"></div>`).join('')}</div>
   <div class="row"><button onclick="gerar()">⚙️ Gerar escala</button><button class="${S.edita?'':'sec'}" onclick="S.edita=!S.edita;render()">${S.edita?'✔ Concluir edição':'✏️ Editar escala'}</button><button class="sec" onclick="domTela()">📅 Domingo ${br(refDom())}</button><button class="sec" onclick="ults()">🗓️ Últimas folgas</button><button class="sec" onclick="inv()">📦 Inventário</button><button class="sec" onclick="zap()">📲 WhatsApp</button><button class="sec" onclick="exp()">📤 Imprimir / PDF / Excel</button><button class="sec" onclick="shareApp()">🔗 Compartilhar app</button><button class="sec" onclick="limpar()">🗑️ Limpar</button></div>
@@ -313,10 +313,9 @@ function ults(){M(`<h3>🗓️ Antes de ${br(START)}</h3><small>Para cada pessoa
 function salvaUlt(){const v=g$;
   for(const c of S.colabs){const u=v('u_'+c.id),d=v('d_'+c.id);if(!u)continue;const er=valUlt(c.nome,u.value,d.value,c.pd);if(er){alert(er);return}}
   S.colabs.forEach(c=>{const u=v('u_'+c.id),d=v('d_'+c.id);if(u){c.ult=u.value;c.ultd=d.value}});save();fm();render()}
-function mesSemanas(v){let primeiro=v+'-01',d=primeiro;if(d<START)d=START;while(dt(d).getDay()!==1)d=add(d,-1);if(d<START)d=START;while(dt(d).getDay()!==1)d=add(d,1);
-  const ultimo=v+'-'+new Date(+v.slice(0,4),+v.slice(5,7),0).getDate();let n=0;for(let x=d;x<=ultimo;x=add(x,7))n++;return n?{inicio:d,semanas:n}:null}
+function mesSemanas(v){let k=Math.ceil(diff(v+'-01',START)/28);if(k<0)k=0;return{inicio:add(START,28*k),semanas:4}}
 function setMes(v){if(!v)return;const r=mesSemanas(v);
-  if(!r){alert('Não há semanas desse mês a partir de '+br(START)+' (início do 5x2).');render();return}
+  if(!r){alert('Não foi possível encontrar o ciclo de 4 semanas.');render();return}
   S.inicio=r.inicio;S.semanas=r.semanas;fb();save();render()}
 function domTela(){const r=refDom();
   const lin=c=>{const st=domSel(c);return `<div class="li"><span>${esc(c.nome)}${c.cargo==='Encarregado'?' ★':''}</span><span><button class="${st==='trab'?'':'sec'}" onclick="setDom('${c.id}','trab')">Trabalha</button> <button class="${st==='dsr'?'':'sec'}" onclick="setDom('${c.id}','dsr')">DSR</button></span></div>`};
