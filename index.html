@@ -21,7 +21,7 @@ input,select{padding:9px;border-radius:8px;border:1px solid var(--ln);background
 table{border-collapse:collapse;font-size:12px;width:max-content}th,td{border:1px solid var(--ln);padding:5px 0;min-width:34px;text-align:center}
 th{background:var(--card);position:sticky;top:0}th.qua{background:var(--qua);color:var(--quat)}th.dom{background:var(--dm);color:var(--dmt)}
 .n{position:sticky;left:0;background:var(--card);min-width:132px;text-align:left;padding:5px 6px;white-space:nowrap;z-index:1}
-td.F{background:var(--f);font-weight:700}td.D{background:var(--d);font-weight:700}tr.sec td{background:var(--pri);color:#fff;text-align:left;padding:4px 8px;font-weight:700}
+td.F{background:var(--f);font-weight:700}td.T{background:#dbeafe;color:#1e3a8a;font-weight:600}td.D{background:var(--d);font-weight:700}tr.sec td{background:var(--pri);color:#fff;text-align:left;padding:4px 8px;font-weight:700}
 tr.t td{font-weight:700;color:var(--mut)}.warn{background:var(--w);border-radius:10px;padding:8px 10px;margin:8px 0;font-size:13px}
 small{color:var(--mut)}.lg span{display:inline-block;padding:2px 8px;border-radius:6px;margin-right:6px;font-size:12px}
 @media print{header,nav,.no{display:none}@page{size:landscape;margin:8mm}body{background:#fff}}
@@ -286,7 +286,7 @@ function entrega(blob,name,share){
   if(share)alert('Seu aparelho não permite compartilhar o arquivo direto. Ele foi baixado: é só anexar no WhatsApp.')}
 function xls(t,share){const ds=dias(),cs=S.colabs.filter(c=>t==='Todos'||c.turno===t).sort((a,b)=>a.turno.localeCompare(b.turno)||ord(a,b));
   let h='<table border="1"><tr><th>Colaborador</th><th>Turno</th>'+ds.map(d=>`<th>${NOMES[(dt(d).getDay()+6)%7]} ${br(d)}</th>`).join('')+'</tr>';
-  cs.forEach(c=>{const g=S.grid[c.id]||{};h+=`<tr><td>${esc(c.nome)}${c.cargo==='Encarregado'?' ★':''}</td><td>${c.turno}</td>`+ds.map(d=>{const v=marca(c,d);return `<td align="center"${v==='F'||v==='D'?` bgcolor="${v==='D'?'#bbf7d0':'#fde68a'}"`:''}>${v==='D'?'DSR':v}</td>`}).join('')+'</tr>'});
+  cs.forEach(c=>{const g=S.grid[c.id]||{};h+=`<tr><td>${esc(c.nome)}${c.cargo==='Encarregado'?' ★':''}</td><td>${c.turno}</td>`+ds.map(d=>{const v=marca(c,d);return `<td align="center"${v==='F'||v==='D'||v==='T'?` bgcolor="${v==='D'?'#bbf7d0':v==='F'?'#fde68a':'#dbeafe'}"`:''}>${v==='D'?'DSR':v}</td>`}).join('')+'</tr>'});
   entrega(new Blob(['\ufeff<html><head><meta charset="utf-8"></head><body>'+h+'</table></body></html>'],{type:'application/vnd.ms-excel'}),'escala-5x2-'+S.inicio+'.xls',share)}
 async function imagem(t,share){
   const semanas=dias(),turnos=['Abertura','Fechamento'].filter(x=>t==='Todos'||t===x),imagens=[];
@@ -298,7 +298,7 @@ async function imagem(t,share){
     q.fillStyle='#fff';q.fillRect(0,0,width,height);q.fillStyle='#17212b';q.font='bold 28px Arial';q.fillText('Escala 5x2 FLV - '+nomeT(t),24,36);q.font='20px Arial';q.fillText('Semana '+(k/7+1)+' · '+br(dk[0])+' a '+br(dk[dk.length-1]),24,57);
     let y=titleH;q.fillStyle='#ecf1f4';q.fillRect(0,y,width,headH);q.strokeStyle='#aab7c0';q.strokeRect(0,y,width,headH);q.fillStyle='#17212b';q.font='bold 19px Arial';q.fillText('Colaborador',16,y+42);
     dk.forEach((d,i)=>{const x=nameW+i*dayW;q.strokeRect(x,y,dayW,headH);q.textAlign='center';q.font='bold 18px Arial';q.fillText(NOMES[(dt(d).getDay()+6)%7],x+dayW/2,y+31);q.font='17px Arial';q.fillText(br(d),x+dayW/2,y+54);if(dt(d).getDay()===1&&isInv(d)){q.font='bold 14px Arial';q.fillText('INV',x+dayW/2,y+69)}});q.textAlign='left';y+=headH;
-    grupos.forEach(g=>{q.fillStyle='#0d7ea4';q.fillRect(0,y,width,rowH);q.fillStyle='#fff';q.font='bold 20px Arial';q.fillText(g.x,16,y+28);y+=rowH;g.cs.forEach(c=>{q.fillStyle='#fff';q.fillRect(0,y,width,rowH);q.strokeStyle='#aab7c0';q.strokeRect(0,y,width,rowH);q.fillStyle='#17212b';q.font='18px Arial';q.fillText(c.nome+(c.cargo==='Encarregado'?' ★':''),16,y+27);dk.forEach((d,i)=>{const x0=nameW+i*dayW,v=marca(c,d);q.fillStyle=v==='F'?'#fde68a':v==='D'?'#bbf7d0':'#fff';q.fillRect(x0,y,dayW,rowH);q.strokeStyle='#aab7c0';q.strokeRect(x0,y,dayW,rowH);if(v){q.fillStyle='#17212b';q.font='bold 18px Arial';q.textAlign='center';q.fillText(v==='D'?'DSR':v,x0+dayW/2,y+27);q.textAlign='left'}});y+=rowH})});
+    grupos.forEach(g=>{q.fillStyle='#0d7ea4';q.fillRect(0,y,width,rowH);q.fillStyle='#fff';q.font='bold 20px Arial';q.fillText(g.x,16,y+28);y+=rowH;g.cs.forEach(c=>{q.fillStyle='#fff';q.fillRect(0,y,width,rowH);q.strokeStyle='#aab7c0';q.strokeRect(0,y,width,rowH);q.fillStyle='#17212b';q.font='18px Arial';q.fillText(c.nome+(c.cargo==='Encarregado'?' ★':''),16,y+27);dk.forEach((d,i)=>{const x0=nameW+i*dayW,v=marca(c,d);q.fillStyle=v==='F'?'#fde68a':v==='D'?'#bbf7d0':v==='T'?'#dbeafe':'#fff';q.fillRect(x0,y,dayW,rowH);q.strokeStyle='#aab7c0';q.strokeRect(x0,y,dayW,rowH);if(v){q.fillStyle='#17212b';q.font='bold 18px Arial';q.textAlign='center';q.fillText(v==='D'?'DSR':v,x0+dayW/2,y+27);q.textAlign='left'}});y+=rowH})});
     q.fillStyle='#4b5963';q.font='16px Arial';q.fillText('F = folga da semana · DSR = folga de domingo · ★ encarregado · INV = inventário',24,height-16);
     const blob=await new Promise(ok=>can.toBlob(ok,'image/png'));imagens.push({blob,name:'escala-5x2-'+S.inicio+'-semana-'+(k/7+1)+'.png'});
   }
@@ -321,7 +321,7 @@ async function pdf(t,share){
       cs.forEach(c=>body.push([c.nome+(c.cargo==='Encarregado'?' *':''),...dk.map(d=>{const v=marca(c,d);return v==='D'?'DSR':v})]))});
     doc.autoTable({startY:14,head:[['Colaborador',...dk.map(d=>NOMES[(dt(d).getDay()+6)%7]+'\n'+br(d)+(dt(d).getDay()===1&&isInv(d)?'\nINV':''))]],body,theme:'grid',
       styles:{fontSize:8.5,cellPadding:1.8,halign:'center',valign:'middle',lineWidth:.15},headStyles:{fillColor:[236,241,244],textColor:30,fontSize:8},columnStyles:{0:{halign:'left',cellWidth:48}},
-      didParseCell:h=>{if(h.section==='body'&&h.column.index>0){const v=h.cell.raw;if(v==='F')h.cell.styles.fillColor=[253,230,138];if(v==='DSR'){h.cell.styles.fillColor=[187,247,208];h.cell.styles.fontStyle='bold'}}}});
+      didParseCell:h=>{if(h.section==='body'&&h.column.index>0){const v=h.cell.raw;if(v==='F')h.cell.styles.fillColor=[253,230,138];if(v==='T')h.cell.styles.fillColor=[219,234,254];if(v==='DSR'){h.cell.styles.fillColor=[187,247,208];h.cell.styles.fontStyle='bold'}}}});
     doc.setFontSize(7);doc.text('F = folga da semana   DSR = folga de domingo   * encarregado   INV = inventário',10,doc.internal.pageSize.getHeight()-6)}
   entrega(doc.output('blob'),'escala-5x2-'+S.inicio+'.pdf',share)}
 function shareApp(){const u=location.href.split('?')[0].split('#')[0],t='Escala 5x2 FLV';
