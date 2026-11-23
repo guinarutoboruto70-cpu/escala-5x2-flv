@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0D7EA4">
+<meta name="app-versao" content="1.1">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png?v=2">
+<link rel="apple-touch-icon" href="icon-192.png?v=2">
+<title>Escala 5x2 FLV</title>
+<style>
+:root{--bg:#f4f7f9;--card:#fff;--tx:#1b2a33;--mut:#6b7c86;--pri:#0D7EA4;--f:#fde68a;--d:#bbf7d0;--w:#fee2e2;--ln:#dde5ea;--qua:#d1fae5;--quat:#065f46;--dm:#e0e7ff;--dmt:#3730a3}
+:root[data-t=dark]{--bg:#10181d;--card:#18232a;--tx:#e8f0f4;--mut:#93a4ae;--f:#7c5e10;--d:#14532d;--w:#5b1f1f;--ln:#2a3a44;--qua:#065f46;--quat:#d1fae5;--dm:#312e81;--dmt:#e0e7ff}@media(prefers-color-scheme:dark){:root:not([data-t=light]){--bg:#10181d;--card:#18232a;--tx:#e8f0f4;--mut:#93a4ae;--f:#7c5e10;--d:#14532d;--w:#5b1f1f;--ln:#2a3a44;--qua:#065f46;--quat:#d1fae5;--dm:#312e81;--dmt:#e0e7ff}}
+*{box-sizing:border-box}body{margin:0;font:15px system-ui,sans-serif;background:var(--bg);color:var(--tx)}
+header{background:var(--pri);color:#fff;padding:12px 14px}header h1{margin:0;font-size:18px}header small{opacity:.85}
+nav{display:flex;gap:8px;padding:10px 12px}nav button{flex:1}
+button{background:var(--pri);color:#fff;border:0;border-radius:10px;padding:10px 12px;font-size:14px}
+button.sec{background:var(--card);color:var(--tx);border:1px solid var(--ln)}button.on{outline:2px solid #fff3}
+main{padding:0 12px 24px}.card{background:var(--card);border:1px solid var(--ln);border-radius:12px;padding:10px 12px;margin:8px 0}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:end;margin:8px 0}label{display:block;font-size:12px;color:var(--mut)}
+input,select{padding:9px;border-radius:8px;border:1px solid var(--ln);background:var(--card);color:var(--tx);font-size:15px;width:100%}
+.w{overflow-x:auto;border:1px solid var(--ln);border-radius:12px;background:var(--card)}
+table{border-collapse:collapse;font-size:12px;width:max-content}th,td{border:1px solid var(--ln);padding:5px 0;min-width:34px;text-align:center}
+th{background:var(--card);position:sticky;top:0}th.qua{background:var(--qua);color:var(--quat)}th.dom{background:var(--dm);color:var(--dmt)}
+.n{position:sticky;left:0;background:var(--card);min-width:132px;text-align:left;padding:5px 6px;white-space:nowrap;z-index:1}
+td.F{background:var(--f);font-weight:700}td.T{background:#90caf9;color:#1e3a8a;font-weight:600}td.D{background:var(--d);font-weight:700}tr.sec td{background:var(--pri);color:#fff;text-align:left;padding:4px 8px;font-weight:700}
+tr.t td{font-weight:700;color:var(--mut)}.warn{background:var(--w);border-radius:10px;padding:8px 10px;margin:8px 0;font-size:13px}
+small{color:var(--mut)}.lg span{display:inline-block;padding:2px 8px;border-radius:6px;margin-right:6px;font-size:12px}
+@media print{header,nav,.no{display:none}@page{size:landscape;margin:8mm}body{background:#fff}}
+.ov{position:fixed;inset:0;background:#0008;display:flex;align-items:flex-end;justify-content:center;z-index:9}
+.md{background:var(--bg);width:100%;max-width:560px;max-height:86vh;overflow:auto;border-radius:16px 16px 0 0;padding:14px}.md h3{margin:0 0 6px}
+.li{display:flex;justify-content:space-between;padding:8px 10px;border:1px solid var(--ln);border-radius:8px;margin:4px 0;background:var(--card)}.li.D,span.D{background:var(--d)}
+h4{margin:14px 0 4px;color:var(--pri)}td.n{cursor:pointer}@media print{.ov{display:none}}
+header{background:linear-gradient(135deg,#17aad6,#0D7EA4 55%,#085a78);box-shadow:0 4px 12px #0005}
+button{background:linear-gradient(180deg,#22b3e0,#0D7EA4 55%,#0a6a8a);box-shadow:0 4px 0 #07475c,0 7px 12px #0003;text-shadow:0 1px 1px #0004;transition:transform .08s,box-shadow .08s}
+button.sec{background:linear-gradient(180deg,var(--card),var(--bg));box-shadow:0 3px 0 var(--ln),0 6px 10px #0002;text-shadow:none}
+button:active{transform:translateY(3px);box-shadow:0 1px 0 #07475c,0 2px 4px #0003}button.sec:active{box-shadow:0 0 0 var(--ln)}
+.card{box-shadow:0 3px 0 var(--ln),0 8px 16px #0001}td.F{background:linear-gradient(180deg,#fff6,#0001),var(--f)}td.D{background:linear-gradient(180deg,#fff6,#0001),var(--d)}
+td.D{font-size:10px;font-weight:700}.pt{display:none}@media print{.pt{display:block;margin:0 0 6px}.w{overflow:visible;border:0}table{width:100%;font-size:8px}th,td{min-width:0;padding:2px 0}.n{position:static;min-width:80px;font-size:9px}td.D{font-size:7px}body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}.bar{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--ln);box-shadow:0 -4px 12px #0003;padding:8px 12px;z-index:8}main{padding-bottom:90px}@media print{.bar{display:none}}.printArea{display:none}@media print{body.imprimindo{background:#fff!important;color:#111!important}body.imprimindo #app{display:none!important}body.imprimindo #printArea{display:block!important}.pweek{page-break-after:always;break-after:page;background:#fff;color:#111;padding:0}.pweek:last-child{page-break-after:auto;break-after:auto}.pweek h2{font-size:16pt;margin:0 0 6mm;color:#111}.pweek table{width:100%;table-layout:fixed;border-collapse:collapse;font-size:10pt;background:#fff;color:#111}.pweek th,.pweek td{border:1px solid #7b8790;padding:3px 2px;text-align:center;background:#fff;color:#111;min-width:0}.pweek th{font-weight:700;background:#e8eef2;color:#111}.pweek .pn{width:30%;text-align:left;padding-left:5px;white-space:nowrap}.pweek tr.ps td{background:#0d7ea4;color:#fff;font-weight:700;text-align:left;padding:4px 6px}.pweek td.F{background:#fde68a;color:#111;font-weight:700}.pweek td.T{background:#90caf9;color:#1e3a8a;font-weight:700}.pweek td.D{background:#bbf7d0;color:#065f46;font-weight:700}.pweek tr.ptot td{background:#f1f5f7;color:#4b5963;font-weight:700}.pweek .plegend{font-size:8pt;color:#4b5963;margin-top:5mm}}.start{min-height:calc(100vh - 110px);display:flex;align-items:center;justify-content:center;padding:20px 12px;background:radial-gradient(circle at 20% 10%,#27b8df33,transparent 35%),radial-gradient(circle at 90% 90%,#0d7ea433,transparent 40%)}.start-box{width:100%;max-width:760px;background:var(--card);border:1px solid var(--ln);border-radius:26px;padding:24px 18px;box-shadow:0 12px 32px #0003;text-align:center}.start-logo{width:76px;height:76px;margin:0 auto 12px;border-radius:24px;display:grid;place-items:center;font-size:42px;background:linear-gradient(135deg,#22b3e0,#0d7ea4);box-shadow:0 6px 0 #07475c}.start-box h2{margin:8px 0 4px;font-size:26px}.start-box p{color:var(--mut);margin:6px auto 20px;max-width:560px}.start-choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.start-choice{border:1px solid var(--ln);border-radius:18px;padding:18px 12px;background:linear-gradient(180deg,var(--card),var(--bg));cursor:pointer;transition:.15s;box-shadow:0 4px 0 var(--ln)}.start-choice:hover{transform:translateY(-2px)}.start-choice b{display:block;font-size:18px;margin-bottom:5px}.start-choice span{font-size:30px}.start-form{text-align:left;max-width:460px;margin:0 auto}.start-form label{margin-top:12px}.start-form input{margin-top:4px}.start-badge{display:inline-block;background:#dbeafe;color:#1e3a8a;border-radius:999px;padding:5px 12px;font-weight:700}@media(max-width:560px){.start-choices{grid-template-columns:1fr}.start-choice{color:var(--tx);text-shadow:none}.start-box{padding:22px 14px}}header h1{font-size:19px}header small{color:#fff;opacity:1;display:block;font-size:14.5px;margin-top:2px}.hc{color:#fff;opacity:.95;font-size:11.5px;line-height:1.45;margin-top:5px}.hc b{font-weight:700}@media screen{table td,table th{min-width:40px;padding:10px 0;font-size:13px}.n{min-width:112px;max-width:112px;overflow:hidden;text-overflow:ellipsis}}summary.sm{cursor:pointer;padding:10px 12px;border:1px solid var(--ln);border-radius:10px;background:var(--card);font-weight:700;color:var(--pri);margin:6px 0}button:disabled{opacity:.4}@page{size:A4 landscape;margin:6mm}.pfolha{page-break-after:always;break-after:page;background:#fff;color:#111}.pfolha:last-child{page-break-after:auto;break-after:auto}.pfolha h2{font-size:11pt;margin:0 0 2mm;color:#111}.pfolha table{width:100%;table-layout:fixed;border-collapse:collapse;font-size:8.5pt;background:#fff;color:#111}.pfolha th,.pfolha td{border:.5px solid #7b8790;padding:2.2mm 0;text-align:center;background:#fff;color:#111;min-width:0;overflow:hidden}.pfolha th{font-weight:700;background:#e8eef2;color:#111;line-height:1.1}.pfolha thead th{padding:1mm 0}.pfolha th,.pfolha td,.pweek th,.pweek td{position:static!important}.pfolha thead th.pn{vertical-align:middle}.pfolha .pn{text-align:left;width:44mm;white-space:nowrap;overflow:hidden;font-size:8.5pt}.pfolha .wk{font-size:8.5pt;background:#cfdbe3}.pfolha td.bl,.pfolha th.bl{border-left:1.6px solid #333}.pfolha td.F{background:#fde68a!important}.pfolha td.D{background:#bbf7d0!important;font-weight:700}.pfolha .ptot td{font-weight:700;background:#f3f6f8}.pfolha .plegend{font-size:7.5pt;margin-top:2mm}}</style></head><body>
+<header style="display:flex;justify-content:space-between;align-items:center"><div><h1 id="tituloApp">🥬 Escala 5x2</h1><small id="subtituloApp">Folgas de domingo e da semana</small><div class="hc">Desenvolvido por <b>William Jesus</b><br>© 2026 · Todos os direitos reservados</div></div><div style="display:flex;gap:8px;align-items:center"><button id="sr" class="sec" onclick="sair()" style="display:none;font-size:14px;padding:8px 12px">🚪 Sair</button><button id="tm" class="sec" onclick="tema()" style="font-size:20px;padding:6px 12px"></button></div></header>
+<nav><button id="b1" onclick="go('escala')">📅 Escala</button><button id="b2" class="sec" onclick="go('equipe')">👥 Equipe</button></nav>
+<main id="app"></main>
+<script>
+let ENTROU=false,SV=-2; // SV: semana em exibição (-1 = ciclo todo) // tela de entrada (sem senha) a cada abertura
+// ===== PARÂMETROS =====
+// Peso de cada dia (Seg..Sex): quanto maior, menos folgas o app coloca nesse dia.
+const W=[3,1,4,1,1]; // Seg 3, Ter 1, Qua 4 (quarta verde), Qui 1, Sex 1
+const START='2026-11-23'; // início do regime 5x2 (1ª segunda-feira)
+const KEY0='escala5x2_flv_v1_teste',KEYG='escala5x2_flv_v1_gerente_teste';let KEY=KEY0;const OLD='escala_domingo_flv_v1',CLOUD='https://escala-atacadao--escalaflv.replit.app/api/state';
+const NOMES=['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];
+const S0=()=>({colabs:[],grid:{},inicio:'2026-11-23',semanas:5,inv:'',tema:'',cap:[3,3,3,4,4],alvoA:[0,3,3,0,0],capv:2,seed:0,edita:false,prev:'',filtro:'Todos',edit:null,tab:'escala',historico:[],perfil:'',setor:'',perfilTemp:''});let S=S0();
+if(S.capv!==2){S.cap=[3,3,3,4,4];S.capv=2} // novos limites: 3 por dia, Qui/Sex até 4
+const save=()=>{if(!S.perfil)return;try{localStorage.setItem(KEY,JSON.stringify({colabs:S.colabs,grid:S.grid,inicio:S.inicio,semanas:S.semanas,inv:S.inv,tema:S.tema,cap:S.cap,alvoA:S.alvoA,historico:S.historico||[],perfil:S.perfil||'',setor:S.setor||'',capv:S.capv}))}catch(e){}};
+const dt=s=>new Date(s+'T12:00:00');
+const iso=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const add=(s,n)=>{const d=dt(s);d.setDate(d.getDate()+n);return iso(d)};
+const diff=(a,b)=>Math.round((dt(a)-dt(b))/864e5);
+const br=s=>s.slice(8)+'/'+s.slice(5,7);
+const uid=()=>Math.random().toString(36).slice(2,9);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const ord=(a,b)=>(b.cargo==='Encarregado')-(a.cargo==='Encarregado')||a.nome.localeCompare(b.nome,'pt-BR');
+const domOff=(c,dom)=>((Math.round(diff(dom,c.pd)/7)%2)+2)%2===0; // domingos alternados a partir do 1º domingo de folga
+const dias=()=>Array.from({length:7*S.semanas},(_,i)=>add(S.inicio,i));
+
+// ===== MOTOR DA ESCALA =====
+const g$=id=>document.getElementById(id);
+const isInv=seg=>!!S.inv&&diff(seg,S.inv)%14===0; // a cada 2 segundas
+const confEnc=c=>c.cargo==='Encarregado'&&c.pd?S.colabs.find(x=>x.id!==c.id&&x.cargo==='Encarregado'&&x.pd&&Math.round(diff(x.pd,c.pd)/7)%2===0):null;
+const msgEnc=(c,o)=>'O DSR de '+c.nome+' cairia no mesmo domingo do encarregado '+o.nome+'. Os encarregados não podem folgar no mesmo domingo: escolha o domingo seguinte ou o anterior.';
+const fd=c=>c.fd!==undefined&&c.fd!==''?+c.fd:(c.fixa?0:-1); // folga fixa da semana (0=Seg..4=Sex, -1=nenhuma)
+const hs=t=>{let h=0;for(const ch of t)h=(h*31+ch.charCodeAt(0))|0;return Math.abs(h)};
+const fdOpts=c=>['Nenhuma',...NOMES.slice(0,5)].map((n,i)=>`<option value="${i?i-1:''}"${(i?i-1:-1)===fd(c)?' selected':''}>${n}</option>`).join('');
+const ultF=c=>[c.ult,c.ultd].filter(Boolean).sort().pop()||''; // a folga mais recente antes do início (semana ou DSR)
+const refDom=()=>add(START,6); // primeiro domingo da escala (ex.: 29/11)
+const domSel=c=>!c.pd?'':(((Math.round(diff(c.pd,refDom())/7)%2)+2)%2===0?'dsr':'trab');
+const domPd=v=>v==='dsr'?refDom():v==='trab'?add(refDom(),7):'';
+const domOpts=c=>[['','— Nenhum —'],['trab','Trabalha'],['dsr','DSR (folga)']].map(([v,t])=>`<option value="${v}"${domSel(c)===v?' selected':''}>${t}</option>`).join('');
+const vis=()=>S.colabs.filter(c=>S.filtro==='Todos'||c.turno===S.filtro);
+const marca=(c,d)=>{const g=S.grid[c.id]||{};return Object.keys(g).length?(g[d]||'T'):(g[d]||'')};
+const nomeColab=c=>c.nome+(S.perfil==='gerente'&&c.setor?' · '+c.setor:'');
+function gerar(only,outra){
+  if(g$('i_inv'))S.inv=g$('i_inv').value;
+  for(let i=0;i<5;i++){if(g$('cap'+i)&&g$('cap'+i).value!=='')S.cap[i]=Math.max(0,+g$('cap'+i).value);if(g$('alvoA'+i)&&g$('alvoA'+i).value!=='')S.alvoA[i]=Math.max(0,+g$('alvoA'+i).value);else if(g$('alvoA'+i))S.alvoA[i]=0}
+  if(dt(S.inicio).getDay()!==1){alert('O início precisa ser uma segunda-feira.');return}
+  if(!S.colabs.length){alert('Cadastre ou importe os colaboradores.');return}
+  if(!only){
+    for(const c of S.colabs){const o=confEnc(c);if(o){alert(msgEnc(c,o));return}}
+    if(!S.colabs.some(c=>c.pd)){alert('Marque quem trabalha e quem fica de DSR no domingo '+br(refDom())+' (botão Domingo).');return}
+    if(S.inicio>START&&!outra&&!S.colabs.some(c=>[1,2,3,4,5,6,7].some(i=>(S.grid[c.id]||{})[add(S.inicio,-i)]))&&!confirm('O mês anterior ainda não foi gerado. O app segue a escala anterior para calcular as folgas. Gerar mesmo assim?'))return;
+  }
+  const cs=S.colabs.filter(c=>c.pd);
+  const alvo=only?cs.filter(c=>c.id===only):cs;
+  if(!only)S.prev=JSON.stringify(S.grid);
+  S.avisos=only?(S.avisos||[]):[];
+  for(let w=0;w<S.semanas;w++){
+    const seg=add(S.inicio,7*w),dom=add(seg,6),inv=isInv(seg),load={Abertura:[0,0,0,0,0],Fechamento:[0,0,0,0,0]};
+    alvo.forEach(c=>{S.grid[c.id]=S.grid[c.id]||{}});
+    const resetSem=()=>{alvo.forEach(c=>{for(let i=0;i<7;i++)delete S.grid[c.id][add(seg,i)]});load.Abertura=[0,0,0,0,0];load.Fechamento=[0,0,0,0,0];cs.forEach(c=>{const g=S.grid[c.id]||{};for(let i=0;i<5;i++)if(g[add(seg,i)])load[c.turno][i]++})};
+    const en=alvo.filter(c=>c.cargo==='Encarregado'),fx=alvo.filter(c=>fd(c)>=0&&c.cargo!=='Encarregado'),ot=alvo.filter(c=>fd(c)<0&&c.cargo!=='Encarregado'),r=w%(ot.length||1);
+    // ordem de escolha: quem trabalha o domingo (2 folgas) escolhe primeiro; nas tentativas extras a ordem varia
+    const ordem=t=>[...en,...fx,...[...ot.slice(r),...ot.slice(0,r)].sort((a,b)=>(domOff(a,dom)?1:0)-(domOff(b,dom)?1:0)||(t?hs(a.id+w+t+S.seed)-hs(b.id+w+t+S.seed):0))];
+    const excesso=()=>{let e=0;['Abertura','Fechamento'].forEach(t=>{for(let i=0;i<5;i++){const n=cs.filter(c=>c.turno===t&&(S.grid[c.id]||{})[add(seg,i)]==='F').length;e+=Math.max(0,n-S.cap[i])}});for(let i=0;i<5;i++){const alvo=+S.alvoA[i]||0;if(alvo){const n=cs.filter(c=>c.turno==='Abertura'&&(S.grid[c.id]||{})[add(seg,i)]==='F').length;e+=Math.abs(n-alvo)*100}}return e};
+    const atribui=c=>{
+      const g=S.grid[c.id],sun=domOff(c,dom),k=sun?1:2;
+      let last=null;
+      for(let i=1;i<=7;i++)if(g[add(seg,-i)]){last=-i;break}
+      const uf=ultF(c);if(last===null&&uf){const d=diff(uf,seg);if(d<0&&d>=-14)last=d} // última folga antes do início (escala 6x1 anterior)
+      if(last===null)last=domOff(c,add(seg,-1))?-1:-3;
+      const cand=[];
+      for(let a=0;a<5;a++){if(k===1)cand.push([a]);else for(let b=a+2;b<5;b++)cand.push([a,b])}
+      const ok=o=>{let p=last;for(const q of sun?[...o,6]:o){
+        if(q-p-1>5)return false;
+        if(q-p<2&&!(fd(c)===0&&q===0&&p===-1))return false;
+        p=q}return true};
+      const outros=cs.filter(x=>x.cargo==='Encarregado'&&x.id!==c.id); // encarregados nunca folgam no mesmo dia
+      const base=cand.filter(o=>(fd(c)<0||o.includes(fd(c)))&&(c.cargo!=='Encarregado'||o.every(i=>!outros.some(x=>(S.grid[x.id]||{})[add(seg,i)]))));
+      // Folgas fixas entram na contagem. Não ultrapassa a meta da Abertura
+      // (terça/quarta) nem o limite do dia, salvo quando a própria folga é fixa.
+      const limite=o=>o.every(i=>{const alvo=c.turno==='Abertura'?(+S.alvoA[i]||0):0;const lim=alvo||S.cap[i];return load[c.turno][i]+1<=lim||fd(c)===i});
+      let pool=base.filter(o=>limite(o)&&ok(o));
+      if(!pool.length){S.avisos.push(c.nome+': sem opção que cumpra todas as regras na semana de '+br(seg));pool=base.filter(ok);if(!pool.length)pool=base.length?base:cand}
+      const cost=o=>o.reduce((s,i)=>s+(load[c.turno][i]+1)*W[i]*(inv&&i<2?3:1)+(load[c.turno][i]>=S.cap[i]?1000:0)+(load[c.turno][i]>=Math.min(3,S.cap[i])?20:0)+((c.turno==='Abertura'&&+S.alvoA[i]&&load[c.turno][i]>=+S.alvoA[i])?80:0),0)+(sun?0:(4-o[o.length-1])*1.5)+(S.seed?(hs(c.id+w+o.join()+S.seed)%300)/100:0); // limite por dia + inventário + 2ª folga mais tarde (dá folga de encaixe na semana seguinte) + variação
+      // segue a lógica da escala anterior: repete as folgas de 2 semanas atrás (mesmo ciclo de domingo), se ainda forem válidas
+      const ant=[0,1,2,3,4].filter(i=>g[add(seg,i-14)]==='F');
+      const rep2=!(outra&&w<2)&&ant.length===k&&pool.find(o=>o.join()===ant.join())&&ant.every(i=>load[c.turno][i]<S.cap[i]||i===fd(c))?ant:null;
+      const best=rep2||pool.reduce((a,b)=>cost(b)<cost(a)?b:a);
+      best.forEach(i=>{g[add(seg,i)]='F';load[c.turno][i]++});
+      if(sun)g[dom]='D';
+    };
+    const av0=S.avisos.length;let melhor=null,pen0=1e9;
+    for(let t=0;t<(only?1:300);t++){ // testa várias ordens e fica com a que respeita melhor os limites por dia
+      resetSem();S.avisos.length=av0;ordem(t).forEach(atribui);
+      const pen=excesso()+(S.avisos.length-av0)*50;
+      if(pen<pen0){pen0=pen;melhor={g:alvo.map(c=>[c.id,Array.from({length:7},(_,i)=>S.grid[c.id][add(seg,i)])]),av:S.avisos.slice(av0)}}
+      if(pen===0)break}
+    resetSem();S.avisos.length=av0;
+    melhor.g.forEach(([id,v])=>v.forEach((x,i)=>{if(x)S.grid[id][add(seg,i)]=x}));S.avisos.push(...melhor.av);
+    for(let i=0;i<5;i++){const alvo=+S.alvoA[i]||0;if(alvo){const n=cs.filter(c=>c.turno==='Abertura'&&(S.grid[c.id]||{})[add(seg,i)]==='F').length;if(n!==alvo)S.avisos.push('Abertura: meta de '+alvo+' folgas na '+NOMES[i]+' da semana de '+br(seg)+' não foi atingida; foram geradas '+n+'.')}}
+  }
+  save();render();if(!only)posGerar();
+}
+function problemas(){
+  const out=[],ds=dias();
+  S.colabs.forEach(c=>{const g=S.grid[c.id]||{};if(!Object.keys(g).length)return;
+    const u=ultF(c),rc=u&&diff(S.inicio,u)>0&&diff(S.inicio,u)<=7;
+    let run=rc?diff(S.inicio,u)-1:0,prev=!!(rc&&diff(S.inicio,u)===1);
+    ds.forEach((d,i)=>{const off=!!g[d];
+      if(off){run=0;if(prev&&!(fd(c)===0&&i%7===0&&(g[add(d,-1)]==='D'||(i===0&&u===add(d,-1)))))out.push(c.nome+': folgas seguidas em '+br(add(d,-1))+'–'+br(d))}
+      else{run++;if(run===6)out.push(c.nome+': 6 dias seguidos de trabalho até '+br(d))}
+      prev=off});
+    for(let w=0;w<S.semanas;w++){let n=0;for(let i=0;i<7;i++)if(g[add(S.inicio,7*w+i)])n++;
+      if(n!==2)out.push(c.nome+': '+n+' folga(s) na semana de '+br(add(S.inicio,7*w)))}
+  });
+  ['Abertura','Fechamento'].forEach(t=>{const cs=S.colabs.filter(c=>c.turno===t);ds.forEach(d=>{const wd=(dt(d).getDay()+6)%7;
+    if(wd<5){const n=cs.filter(c=>(S.grid[c.id]||{})[d]==='F').length;if(n>S.cap[wd])out.push(t+': '+n+' folgas na '+NOMES[wd]+' '+br(d)+' (máx. '+S.cap[wd]+')')}})});
+  const es=S.colabs.filter(c=>c.cargo==='Encarregado');
+  if(es.length>1)ds.forEach(d=>{if(es.filter(c=>(S.grid[c.id]||{})[d]).length>1)out.push('Encarregados folgando no mesmo dia: '+br(d))});
+  return [...(S.avisos||[]),...out];
+}
+function tg(id,d){if(!S.edita)return;flip(id,d)}
+function flip(id,d){const g=S.grid[id]=S.grid[id]||{};if(g[d]==='D')return;const wd=dt(d).getDay();if(wd===0||wd===6){alert('Folga da semana só de segunda a sexta. O domingo é o DSR, definido no cadastro do colaborador.');return}if(g[d])delete g[d];else g[d]='F';save();render()}
+function limpar(){if(confirm('Apagar a escala gerada?')){S.grid={};S.avisos=[];save();render()}}
+
+// ===== TELAS =====
+function go(t){fb();S.tab=t;S.edit=null;render()}
+const chips=()=>`<div class="row no">${['Todos','Abertura','Fechamento'].map(t=>`<button class="${S.filtro===t?'':'sec'}" onclick="S.filtro='${t}';render()">${t}</button>`).join('')}</div>`;
+function aviso(){const f=S.colabs.filter(c=>!c.pd),su=Object.keys(S.grid).length?[]:S.colabs.filter(c=>!ultF(c));
+  const dq=['Abertura','Fechamento'].map(t=>{const cs=S.colabs.filter(c=>c.turno===t&&c.pd),a=cs.filter(c=>domSel(c)==='dsr').length,b=cs.length-a;
+    return Math.abs(a-b)>1?t+': '+a+' de DSR e '+b+' trabalham em '+br(refDom()):''}).filter(Boolean);
+  const ec=S.colabs.some(c=>c.cargo==='Encarregado'&&!c.pd)&&S.colabs.some(c=>c.cargo==='Encarregado'&&c.pd);
+  return f.length||su.length||dq.length?`<div class="warn no"><b>📌 Antes de gerar:</b> toque em <b>📅 Domingo ${br(refDom())}</b> e marque quem trabalha e quem fica de DSR. Quem estiver sem domingo <b>não entra na escala</b>.${f.length?'<br>Sem domingo: '+f.map(c=>esc(c.nome)).join(', ')+'.':''}${ec?'<br>⚠ Sem o domingo de um dos encarregados, a regra de eles não folgarem juntos não é aplicada.':''}${su.length?'<br>🗓️ '+su.length+' sem a última folga da semana e o último DSR antes de '+br(START)+' (botão Últimas folgas): evita passar de 5 dias seguidos no começo.':''}${dq.length?'<br>⚖️ Equilibre os domingos (metade em cada) para os limites caberem: '+dq.join('; ')+'.':''}</div>`:''}
+function vInicio(){
+  const p=S.perfilTemp;
+  return `<div class="start"><div class="start-box"><div class="start-logo">🥬</div><h2>Bem-vindo ao Escala 5x2</h2><p>Organize as folgas da sua equipe com clareza. Escolha como você vai usar o aplicativo; seus dados ficarão separados neste aparelho.</p>${p?`<div class="start-form"><span class="start-badge">${p==='gerente'?'Modo gerente':'Modo encarregado de setor'}</span><label>${p==='gerente'?'Nome do ambiente':'Nome do setor'}</label><input id="inicio_nome" placeholder="${p==='gerente'?'Ex.: Escala gerencial':'Ex.: FLV, Açougue, Padaria'}" value="${p==='gerente'?'Gerencial':''}"><small>${p==='gerente'?'Aqui você cadastrará os encarregados de todos os setores.':'Aqui ficarão os funcionários e a escala deste setor.'}</small><div class="row" style="margin-top:18px"><button onclick="confirmarInicio()">Continuar</button><button class="sec" onclick="S.perfilTemp='';render()">Voltar</button></div></div>`:`<div class="start-choices"><button class="start-choice" onclick="escolherPerfil('setor')"><span>👤</span><b>Encarregado de setor</b><small>Cadastre sua equipe e gere a escala do seu setor.</small></button><button class="start-choice" onclick="escolherPerfil('gerente')"><span>👥</span><b>Gerente</b><small>Cadastre encarregados de todos os setores e gere a escala gerencial.</small></button></div>`}<small style="display:block;margin-top:22px">Você poderá usar o mesmo link em aparelhos diferentes; cada aparelho terá seus próprios dados.</small></div></div>`
+}
+function escolherPerfil(p){S.perfilTemp=p;render()}
+function confirmarInicio(){const n=(g$('inicio_nome')?.value||'').trim();if(!n){alert('Informe o nome do setor ou ambiente.');return}S.perfil=S.perfilTemp;S.setor=n;S.perfilTemp='';S.tab='escala';ENTROU=true;iniciaS();save();aplicaTema();render()}
+function editarAmbiente(){const n=prompt(S.perfil==='gerente'?'Nome do ambiente gerencial:':'Nome do setor:',S.setor||'');if(n&&n.trim()){S.setor=n.trim();save();render()}}
+function aplicaIdentidade(){const t=g$('tituloApp'),sub=g$('subtituloApp');if(!t)return;t.textContent=S.perfil?('🥬 Escala 5x2 — '+(S.setor||'Setor')):'🥬 Escala 5x2';if(sub)sub.textContent=S.perfil==='gerente'?'Escala gerencial de encarregados':'Folgas de domingo e da semana'}
+const TUTK='escala5x2_tut_v1_teste';
+const TUT=[
+['📲','Instalar no celular','<b>Android (Chrome):</b> abra o link do app, toque nos três pontinhos (⋮) e escolha <b>Instalar app</b> ou <b>Adicionar à tela inicial</b>.<br><br><b>iPhone (Safari):</b> toque em <b>Compartilhar</b> (quadrado com seta) e depois em <b>Adicionar à Tela de Início</b>.<br><br>O ícone 🥬 aparece na tela do celular, como um app comum.'],
+['👤','Escolher o perfil','Na tela inicial, toque em <b>Encarregado de setor</b> ou <b>Gerente</b>. Cada perfil tem seus próprios dados, guardados no seu celular.<br><br>No primeiro acesso, informe o nome do setor. Para trocar de perfil, toque em <b>🚪 Sair</b>, no topo da tela.'],
+['👥','Cadastrar a equipe','Na aba <b>👥 Equipe</b>, toque em <b>➕ Novo</b> e preencha nome, turno e o domingo (<b>Trabalha</b> ou <b>DSR</b>).<br><br>Use <b>folga fixa</b> só para quem folga sempre no mesmo dia da semana. Toque no nome de uma pessoa para ver os domingos e as folgas dela.'],
+['⚙️','Gerar a escala','Na aba <b>📅 Escala</b>:<br>1. Toque em <b>📅 Domingo</b> e marque quem trabalha e quem fica de DSR.<br>2. Se quiser, preencha <b>🗓️ Últimas folgas</b>.<br>3. Toque em <b>⚙️ Gerar escala</b>.<br><br>Para ajustar, use <b>✏️ Editar escala</b> e toque nas células. O quadro <b>⚠️ Conferir</b> avisa se alguma regra não foi cumprida.'],
+['💾','Enviar e proteger','Use <b>📲 WhatsApp</b> para mandar a semana e <b>📤 Imprimir / PDF / Excel</b> para exportar.<br><br>Na tela inicial, toque em <b>⬇️ Baixar backup</b> de vez em quando e guarde o arquivo fora do celular. Para recuperar, toque em <b>📥 Restaurar backup</b>.']
+];
+function tut(i){
+  i=Math.max(0,Math.min(TUT.length-1,i));const x=TUT[i],ult=i===TUT.length-1;
+  M(`<div style="text-align:center;font-size:44px">${x[0]}</div><h3 style="text-align:center">${x[1]}</h3><div class="card" style="line-height:1.55">${x[2]}</div><div style="text-align:center;margin:8px 0;color:var(--pri)">${TUT.map((_,k)=>k===i?'●':'○').join(' ')}</div><div class="row">${i?`<button class="sec" onclick="tut(${i-1})">← Voltar</button>`:''}${ult?'<button onclick="fm()">✔ Entendi</button>':`<button onclick="tut(${i+1})">Próximo →</button>`}</div>`)}
+function navSem(){
+  if(SV<0)return '<div class="row no"><button class="sec" onclick="SV=0;render()">📆 Ver por semana</button></div>';
+  const a=add(S.inicio,7*SV);
+  return `<div class="row no" style="justify-content:space-between;align-items:center;flex-wrap:nowrap"><button class="sec" onclick="SV=Math.max(0,SV-1);render()"${SV?'':' disabled'}>←</button><b style="text-align:center">Semana ${SV+1} de ${S.semanas}<br><small>${br(a)} a ${br(add(a,6))}</small></b><button class="sec" onclick="SV=Math.min(S.semanas-1,SV+1);render()"${SV>=S.semanas-1?' disabled':''}>→</button><button class="sec" onclick="SV=-1;render()">Tudo</button></div>`}
+function gerarLoad(a,b){
+  const o=document.createElement('div');o.id='ld';o.className='ov';o.style.alignItems='center';o.innerHTML='<div class="card" style="font-size:16px"><b>⏳ Gerando a escala…</b></div>';document.body.appendChild(o);
+  setTimeout(()=>{try{gerar(a,b)}finally{o.remove()}},60)}
+function lembreteBk(){let t=0;try{t=+localStorage.getItem('escala5x2_bk_teste')||0}catch(e){}
+  const d=t?Math.floor((Date.now()-t)/864e5):-1;
+  return d<0?'<div class="warn">💾 Você ainda não fez backup. Toque em <b>Baixar backup</b>.</div>':d>=7?'<div class="warn">💾 Último backup há '+d+' dias. Faça um novo.</div>':''}
+function checaVersao(){
+  if(!navigator.onLine)return;
+  fetch('index.html?v='+Date.now(),{cache:'no-store'}).then(r=>r.text()).then(t=>{
+    const m=t.match(/name="app-versao" content="([^"]+)"/),v=document.querySelector('meta[name=app-versao]');
+    if(m&&v&&m[1]!==v.content&&!g$('nv')){const b=document.createElement('div');b.id='nv';b.className='bar no';b.style.cssText='top:0;bottom:auto;border-top:0;border-bottom:1px solid var(--ln);box-shadow:0 4px 12px #0003';b.innerHTML='<b>🆕 Nova versão disponível</b> <button onclick="location.reload()">Atualizar</button>';document.body.appendChild(b)}}).catch(()=>{})}
+function infoPerfil(p){let d=null;try{d=JSON.parse(localStorage.getItem(p==='gerente'?KEYG:KEY0)||'null')}catch(e){}
+  return d&&((d.colabs||[]).length||Object.keys(d.grid||{}).length||d.perfil)?d:null}
+function vEntrada(){
+  const bt=(p,ic,tt,sub)=>{const d=infoPerfil(p);return `<button class="start-choice" onclick="abrir('${p}')"><span>${ic}</span><b>${tt}</b><small>${d?'Entrar'+(d.setor?' — '+esc(d.setor):'')+' · '+(d.colabs||[]).length+' pessoa(s)':'Primeiro acesso: '+sub}</small></button>`};
+  return `<div class="start"><div class="start-box"><div class="start-logo">🥬</div><h2>Escala 5x2</h2><p>Escolha como vai usar o app. Cada perfil tem seus próprios dados, guardados neste aparelho.</p>
+  <div class="start-choices">${bt('setor','👤','Encarregado de setor','cadastre sua equipe')}${bt('gerente','👥','Gerente','cadastre os encarregados')}</div>
+  ${lembreteBk()}<div class="row" style="justify-content:center;margin-top:14px"><button class="sec" onclick="tut(0)">📖 Como instalar e usar</button></div>
+  <h4 style="margin-top:22px">💾 Backup dos dados</h4><small style="display:block">Salva os dois perfis (equipe, escala e histórico) em um arquivo. Faça de vez em quando e antes de mudar o app.</small>
+  <div class="row" style="justify-content:center;margin-top:10px"><button onclick="backup(1)">📤 Compartilhar backup</button><button class="sec" onclick="backup(0)">⬇️ Baixar backup</button><button class="sec" onclick="g$('bk_file').click()">📥 Restaurar backup</button></div>
+  <input type="file" id="bk_file" accept=".json,application/json" style="display:none" onchange="restaurar(this)"></div></div>`
+}
+function iniciaS(){if(S.mv!==1){S.mv=1;const r=mesSemanas(S.inicio.slice(0,7));if(r){S.inicio=r.inicio;S.semanas=r.semanas}}migrarLegado()}
+function abrir(p){
+  KEY=p==='gerente'?KEYG:KEY0;S=S0();SV=-2;
+  try{Object.assign(S,JSON.parse(localStorage.getItem(KEY)||'{}'))}catch(e){}
+  if(S.capv!==2){S.cap=[3,3,3,4,4];S.capv=2}
+  if(S.perfil||S.colabs.length||Object.keys(S.grid||{}).length){ // já usado neste perfil: entra direto
+    S.perfil=p;S.setor=S.setor||(p==='gerente'?'Gerencial':'FLV');S.tab='escala';ENTROU=true;iniciaS();save();aplicaTema();render();return}
+  S.perfilTemp=p;render()} // primeiro acesso: pede o nome do setor/ambiente
+function sair(){save();ENTROU=false;S.perfilTemp='';render()}
+function backup(share){
+  if(ENTROU)save();try{localStorage.setItem('escala5x2_bk_teste',Date.now())}catch(e){}const dados={};
+  for(const [k,key] of [['setor',KEY0],['gerente',KEYG]]){try{const d=JSON.parse(localStorage.getItem(key)||'null');if(d)dados[k]=d}catch(e){}}
+  const n=new Date(),p=x=>String(x).padStart(2,'0'),o={app:'escala5x2-flv',versao:2,criado:n.toISOString(),dados};
+  entrega(new Blob([JSON.stringify(o)],{type:'application/json'}),'backup-escala-5x2-'+n.getFullYear()+p(n.getMonth()+1)+p(n.getDate())+'.json',share)}
+function restaurar(inp){
+  const f=inp.files&&inp.files[0];if(!f)return;const r=new FileReader();
+  r.onload=()=>{try{const o=JSON.parse(r.result);if(!o||o.app!=='escala5x2-flv'||!o.dados)throw 0;
+    let set=null,ger=null;if(o.versao===2){set=o.dados.setor||null;ger=o.dados.gerente||null}else set=o.dados; // versão 1 = só o perfil de setor
+    if((!set&&!ger)||(set&&!Array.isArray(set.colabs))||(ger&&!Array.isArray(ger.colabs)))throw 0;
+    const q=x=>x?x.colabs.length+' pessoa(s)':'sem dados';
+    if(!confirm('Restaurar o backup de '+(o.criado||'').slice(0,10)+'?\nEncarregado de setor: '+q(set)+'\nGerente: '+q(ger)+'\nOs dados atuais desses perfis neste aparelho serão substituídos.'))return;
+    try{if(set)localStorage.setItem(KEY0+'_antes',localStorage.getItem(KEY0)||'');if(ger)localStorage.setItem(KEYG+'_antes',localStorage.getItem(KEYG)||'')}catch(e){}
+    if(set)localStorage.setItem(KEY0,JSON.stringify(set));if(ger)localStorage.setItem(KEYG,JSON.stringify(ger));location.reload()}catch(e){alert('Arquivo de backup inválido. Use um arquivo gerado pelo botão Backup deste app.')}};
+  r.readAsText(f);inp.value=''}
+function vEscala(){
+  const ds0=dias(),p=problemas();if(SV===-2){const h=diff(iso(new Date()),S.inicio);SV=h>=0&&h<7*S.semanas?Math.floor(h/7):0}const ds=SV<0?ds0:ds0.slice(SV*7,SV*7+7);
+  const head='<tr><th class="n">Colaborador</th>'+ds.map(d=>{const i=(dt(d).getDay()+6)%7;return `<th class="${i==2?'qua':i==6?'dom':''}">${NOMES[i]}<br>${br(d)}${i==0&&isInv(d)?'<br>📦':''}</th>`}).join('')+'</tr>';
+  const body=['Abertura','Fechamento'].filter(t=>S.filtro==='Todos'||S.filtro===t).map(t=>{
+    const cs=S.colabs.filter(c=>c.turno===t).sort(ord);if(!cs.length)return'';
+    const rows=cs.map(c=>`<tr><td class="n" onclick="ver('${c.id}')">${esc(nomeColab(c))}${c.cargo==='Encarregado'?' ★':''}${fd(c)>=0?' 📌':''}</td>`+ds.map(d=>{const v=marca(c,d);return `<td class="${v}" onclick="tg('${c.id}','${d}')">${v==='D'?'DSR':v}</td>`}).join('')+'</tr>').join('');
+    const tot=`<tr class="t"><td class="n">Folgas no dia</td>`+ds.map(d=>`<td>${cs.filter(c=>(S.grid[c.id]||{})[d]).length}</td>`).join('')+'</tr>';
+    return `<tr class="sec"><td colspan="${ds.length+1}">${t}</td></tr>`+rows+tot}).join('');
+  return `<div class="card no"><div class="row"><div style="flex:1"><label>Ciclo da escala (escolha o mês)</label><input type="month" id="i_mes" value="${S.inicio.slice(0,7)}" onchange="setMes(this.value)"></div></div>
+  <small>O app gera um ciclo fixo de 4 semanas, sempre de segunda a domingo: ${br(S.inicio)} a ${br(add(S.inicio,7*S.semanas-1))}. O ciclo seguinte começa 28 dias depois.</small>
+  <details class="no"><summary class="sm">⚙️ Ajustes (inventário e limites)</summary><div class="row"><div style="flex:1"><label>📦 Uma segunda de inventário (repete a cada 2 segundas)</label><input type="date" id="i_inv" value="${S.inv||''}"></div></div>
+  <div class="row"><label style="width:100%">Máximo de folgas por dia em cada turno <small>(regra do Fechamento e limite de segurança da Abertura)</small></label>${[0,1,2,3,4].map(i=>`<div style="width:56px"><label>${NOMES[i]}</label><input type="number" min="0" max="20" id="cap${i}" value="${S.cap[i]}"></div>`).join('')}</div><div class="row"><label style="width:100%">Meta de folgas na Abertura <small>(0 = sem meta; terça e quarta começam com 3)</small></label>${[0,1,2,3,4].map(i=>`<div style="width:56px"><label>${NOMES[i]}</label><input type="number" min="0" max="20" id="alvoA${i}" value="${S.alvoA[i]||0}"></div>`).join('')}</div></details>
+  <div class="row"><button onclick="gerarLoad()">⚙️ Gerar escala</button><button class="${S.edita?'':'sec'}" onclick="S.edita=!S.edita;render()">${S.edita?'✔ Concluir edição':'✏️ Editar escala'}</button><button class="sec" onclick="domTela()">📅 Domingo ${br(refDom())}</button></div><details class="no"><summary class="sm">⋯ Mais opções</summary><div class="row"><button class="sec" onclick="ults()">🗓️ Últimas folgas</button><button class="sec" onclick="inv()">📦 Inventário</button><button class="sec" onclick="relatorio()">📋 Relatório do ciclo</button><button class="sec" onclick="historico()">📚 Histórico</button><button class="sec" onclick="zap()">📲 WhatsApp</button><button class="sec" onclick="exp()">📤 Imprimir / PDF / Excel</button><button class="sec" onclick="shareApp()">🔗 Compartilhar app</button><button class="sec" onclick="limpar()">🗑️ Limpar</button></div></details>
+  <small>Toque no nome para ver domingos e folgas da pessoa; para ajustar as folgas (F), toque em ✏️ Editar escala. DSR = folga de domingo (só aos domingos). ★ encarregado, 📌 folga fixa, 📦 inventário.</small></div>${aviso()}${chips()}
+  ${S.edita?'<div class="warn no" style="background:var(--f)">✏️ <b>Modo edição:</b> toque numa célula para marcar ou tirar a folga (F). O DSR do domingo muda pelo cadastro do colaborador.</div>':''}
+  <h3 class="pt">Escala 5x2 — ${esc(S.setor||'')} · ${S.filtro==='Todos'?'Abertura e Fechamento':S.filtro} · ${br(S.inicio)} a ${br(add(S.inicio,7*S.semanas-1))}</h3>
+  ${navSem()}<div class="w"><table>${head}${body||''}</table></div>
+  ${p.length?`<div class="warn no"><b>⚠️ Conferir:</b><br>${p.slice(0,12).map(esc).join('<br>')}${p.length>12?'<br>… e mais '+(p.length-12):''}</div>`:(Object.keys(S.grid).length?'<div class="card no">✅ Regras cumpridas em toda a escala.</div>':'')}
+  <p class="lg"><span style="background:var(--f)">F folga</span><span style="background:var(--d)">DSR = folga de domingo</span></p>`;
+}
+function vEquipe(){
+  const e=S.edit,sel=(v,o)=>o.map(x=>`<option${x===v?' selected':''}>${x}</option>`).join(''),ger=S.perfil==='gerente';
+  const card=c=>`<div class="card" onclick="ver('${c.id}')"><b>${esc(c.nome)}</b>${c.cargo==='Encarregado'?' ★':''}${ger?`<br><small>Setor: ${esc(c.setor||'Não informado')} · `:'<br><small>'}Domingo ${br(refDom())}: ${domSel(c)==='dsr'?'DSR':domSel(c)==='trab'?'Trabalha':'—'}${fd(c)>=0?' · 📌 folga fixa: '+NOMES[fd(c)]:''}</small></div>`;
+  const list=['Abertura','Fechamento'].filter(t=>S.filtro==='Todos'||S.filtro===t).map(t=>{const cs=S.colabs.filter(c=>c.turno===t).sort(ord);return cs.length?`<h4>${t} (${cs.length})</h4>`+cs.map(card).join(''):''}).join('');
+  const form=e?`<div class="card"><b>${e.id?'Editar':ger?'Novo encarregado':'Novo colaborador'}</b>
+  <label>Nome</label><input id="f_nome" value="${esc(e.nome||'')}">
+  ${ger?`<input type="hidden" id="f_cargo" value="Encarregado"><label>Setor</label><input id="f_setor" placeholder="Ex.: FLV, Açougue, Padaria" value="${esc(e.setor||'')}">`:`<label>Cargo</label><select id="f_cargo">${sel(e.cargo||'Colaborador',['Colaborador','Encarregado'])}</select>`}
+  <label>Turno</label><select id="f_turno">${sel(e.turno||'Abertura',['Abertura','Fechamento'])}</select>
+  <label>Domingo ${br(refDom())}</label><select id="f_dom">${domOpts(e)}</select>
+  <label>Folga fixa na semana</label><select id="f_fd">${fdOpts(e)}</select>
+  <div class="row"><button onclick="sv()">Salvar</button><button class="sec" onclick="go('equipe')">Cancelar</button>${e.id?`<button class="sec" onclick="del('${e.id}')">Excluir</button>`:''}</div></div>`:'';
+  return `<div class="card"><b>${ger?'👥 Cadastro dos encarregados de todos os setores':'👥 Equipe do setor '+esc(S.setor||'')}</b><br><small>${ger?'Cadastre cada encarregado com o respectivo setor para gerar a escala gerencial.':'Cadastre os colaboradores deste setor.'}</small></div><div class="row no"><button onclick="ed()">➕ ${ger?'Novo encarregado':'Novo'}</button><button class="sec" onclick="editarAmbiente()">⚙️ ${ger?'Editar ambiente':'Editar setor'}</button>${!ger?'<button class="sec" onclick="importar()">⬇️ Importar do app antigo</button>':''}<button class="sec" onclick="shareApp()">🔗 Compartilhar app</button><button class="sec" onclick="backup(0)">💾 Backup</button></div>${chips()}${form}${list||'<div class="card">Nenhum colaborador. Use o botão acima para cadastrar.</div>'}`;
+}
+function ed(id){S.edit=id?{...S.colabs.find(c=>c.id===id)}:{};render()}
+function sv(){
+  const e=S.edit,v=i=>document.getElementById(i);
+  const c={id:e.id||uid(),nome:v('f_nome').value.trim(),cargo:S.perfil==='gerente'?'Encarregado':v('f_cargo').value,turno:v('f_turno').value,setor:S.perfil==='gerente'?(v('f_setor').value.trim()):(e.setor||''),pd:domPd(v('f_dom').value),fd:v('f_fd').value===''?'':+v('f_fd').value,ult:e.ult||'',ultd:e.ultd||'',prov:false};
+  if(!c.nome){alert('Informe o nome.');return}if(S.perfil==='gerente'&&!c.setor){alert('Informe o setor do encarregado.');return}
+  if(c.pd&&dt(c.pd).getDay()!==0){alert('O primeiro domingo de folga precisa cair num domingo.');return}
+  {const o=confEnc(c);if(o){alert(msgEnc(c,o));return}}
+  const i=S.colabs.findIndex(x=>x.id===c.id);i>=0?S.colabs[i]=c:S.colabs.push(c);save();go('equipe')}
+function del(id){if(confirm('Excluir colaborador?')){S.colabs=S.colabs.filter(c=>c.id!==id);delete S.grid[id];save();go('equipe')}}
+async function importar(){
+  let d=null;
+  try{d=JSON.parse(localStorage.getItem(OLD))}catch(e){}
+  if(!d||!(d.colaboradores||[]).length){try{d=await (await fetch(CLOUD)).json()}catch(e){}} // só leitura: este app nunca grava no app antigo
+  const l=((d&&d.colaboradores)||[]).filter(c=>c.status==='Ativo');
+  if(!l.length){alert('Não encontrei colaboradores no app antigo. Cadastre manualmente.');return}
+  const nz=t=>String(t).normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
+  const ja=new Set(S.colabs.map(c=>nz(c.nome+'|'+c.turno)));let novos=0;
+  l.forEach(o=>{const t=o.turno==='Fechamento'?'Fechamento':'Abertura';if(ja.has(nz(o.nome+'|'+t)))return;
+    S.colabs.push({id:uid(),nome:o.nome,cargo:o.cargo==='Encarregado'?'Encarregado':'Colaborador',turno:t,fd:/alan lima|josenilde/i.test(o.nome)?0:'',pd:'',ult:'',ultd:''});novos++});
+  save();go('equipe');
+  alert(novos+' colaborador(es) adicionados; '+(l.length-novos)+' já estavam cadastrados. Ninguém foi apagado nem alterado.')}
+// ===== JANELAS =====
+function M(h){let m=g$('m'),o=m&&m.querySelector('.md'),st=o?o.scrollTop:0;
+  if(!m){m=document.createElement('div');m.id='m';document.body.appendChild(m)}
+  m.className='ov';m.innerHTML='<div class="md">'+h+'<div class="row"><button class="sec" onclick="fm()">Fechar</button></div></div>';m.querySelector('.md').scrollTop=st}
+const fm=()=>{const m=g$('m');if(m)m.remove()};
+const pes=id=>S.colabs.find(x=>x.id===id);
+function ver(id){const c=pes(id);
+  M(`<h3 style="margin-bottom:2px">${esc(c.nome)}</h3><small>${c.turno}${c.cargo==='Encarregado'?' · Encarregado':''}${S.perfil==='gerente'&&c.setor?' · Setor: '+esc(c.setor):''}${fd(c)>=0?' · 📌 folga fixa: '+NOMES[fd(c)]:''}</small>
+  <div class="card" style="margin-top:12px"><h4 style="margin-top:0">Configuração principal</h4>
+    ${S.perfil==='gerente'?'<b>✅ Cadastro gerencial: encarregado</b>':'<label><input type="checkbox" id="v_enc" style="width:auto"'+(c.cargo==='Encarregado'?' checked':'')+'> ★ É encarregado</label>'}<small>Encarregados não folgam no mesmo dia.</small>
+    <label style="margin-top:12px">Domingo ${br(refDom())}</label><select id="v_dom">${domOpts(c)}</select><small>Define o primeiro domingo de trabalho ou DSR; os próximos domingos alternam.</small>
+    <label style="margin-top:12px">Folga fixa na semana</label><select id="v_fd">${fdOpts(c)}</select><small>Use somente se a pessoa sempre folga no mesmo dia.</small>
+  </div>
+  <details class="card" style="margin-top:10px"><summary style="cursor:pointer;font-weight:700;color:var(--pri)">🗓️ Dados anteriores ao início da escala</summary><small style="display:block;margin:8px 0">Esses dados ajudam a evitar mais de cinco dias seguidos de trabalho nas primeiras semanas e a manter o intervalo entre DSRs.</small>
+    <label>Última folga da semana antes de ${br(START)}</label><input type="date" id="v_ult" value="${c.ult||''}">
+    <label style="margin-top:10px">Último DSR antes de ${br(START)}</label><input type="date" id="v_ultd" value="${c.ultd||''}">
+  </details>
+  <div class="row" style="margin-top:14px"><button onclick="conc('${id}')">✔ Concluir</button><button class="sec" onclick="sem('${id}')">📅 Folgas da semana</button><button class="sec" onclick="fm();ed('${id}')">✏️ Editar cadastro</button></div>`)}
+function conc(id){const c=pes(id),v=domPd(g$('v_dom').value),cg=S.perfil==='gerente'?'Encarregado':g$('v_enc').checked?'Encarregado':'Colaborador';
+  const o=confEnc({...c,pd:v,cargo:cg});if(o){alert(msgEnc(c,o));return}
+  const uv=g$('v_ult').value,dv=g$('v_ultd').value,er=valUlt(c.nome,uv,dv,v);if(er){alert(er);return}c.ult=uv;c.ultd=dv;const fv=g$('v_fd').value;c.fd=fv===''?'':+fv;delete c.fixa;c.pd=v;c.cargo=cg;c.prov=false;if(!v)delete S.grid[id];save();
+  if(Object.keys(S.grid[id]||{}).length)gerar(id); // refaz só essa pessoa
+  if(!c.pd){fm();render();return}
+  doms(id)}
+function doms(id){const c=pes(id),ds=dias().filter(d=>dt(d).getDay()===0);
+  M(`<h3>Domingos de ${esc(c.nome)}</h3>`+ds.map(d=>{const f=domOff(c,d);return `<div class="li ${f?'D':''}"><span>${br(d)}</span><b>${f?'DSR – folga':'Trabalha'}</b></div>`}).join('')+`<div class="row"><button onclick="sem('${id}')">📅 Folgas da semana</button></div>`)}
+function sem(id){const c=pes(id),g=S.grid[id]||{};
+  if(!Object.keys(g).length){M(`<h3>${esc(c.nome)}</h3><p>A escala ainda não foi gerada.</p><div class="row"><button onclick="gerar('${id}');sem('${id}')">⚙️ Gerar escala</button></div>`);return}
+  let h=`<h3>Folgas da semana – ${esc(c.nome)}</h3><small>Toque no dia para marcar ou tirar a folga.</small>`;
+  for(let w=0;w<S.semanas;w++){const seg=add(S.inicio,7*w),dd=g[add(seg,6)]==='D';
+    h+=`<div class="li" style="display:block"><b>${br(seg)} a ${br(add(seg,6))}</b><div class="row">`+[0,1,2,3,4].map(i=>{const d=add(seg,i);return `<button class="${g[d]?'':'sec'}" onclick="t2('${id}','${d}')">${NOMES[i]}<br>${br(d)}</button>`}).join('')+`<span class="${dd?'D':''}" style="padding:8px;border-radius:8px">${dd?'Dom: DSR':'Dom: trabalha'}</span></div></div>`}
+  const p=problemas().filter(x=>x.startsWith(c.nome+':'));
+  if(p.length)h+=`<div class="warn">${p.map(esc).join('<br>')}</div>`;
+  M(h)}
+function t2(id,d){flip(id,d);sem(id)}
+function inv(){
+  if(!S.inv){alert('Informe uma segunda de inventário e gere a escala.');return}
+  const ds=dias().filter(d=>dt(d).getDay()===1&&isInv(d));
+  M('<h3>📦 Inventário (22h às 6h)</h3><small>Disponíveis = quem não folga na segunda nem na terça. A escolha é dos encarregados.</small>'+(ds.map(d=>`<div class="li" style="display:block"><b>Segunda ${br(d)}</b>`+['Abertura','Fechamento'].map(t=>{
+    const el=S.colabs.filter(c=>c.turno===t&&c.pd&&!(S.grid[c.id]||{})[d]&&!(S.grid[c.id]||{})[add(d,1)]);
+    return `<br><small>${t} (${el.length}): ${el.map(c=>esc(c.nome)).join(', ')||'—'}</small>`}).join('')+'</div>').join('')||'<p>Nenhuma segunda de inventário no período.</p>'))}
+function zap(){
+  M(`<h3>📲 Enviar por WhatsApp</h3><small>Turno: ${S.filtro} (troque no filtro da tela)</small><label>Semana</label><select id="z_w">${Array.from({length:S.semanas},(_,w)=>`<option value="${w}">${br(add(S.inicio,7*w))} a ${br(add(S.inicio,7*w+6))}</option>`).join('')}</select>
+  <div class="row"><button onclick="zapGo()">Enviar</button></div>`)}
+function zapGo(){const seg=add(S.inicio,7*+g$('z_w').value);
+  let t=`*ESCALA 5x2 FLV${S.filtro==='Todos'?'':' – '+S.filtro}*\nSemana ${br(seg)} a ${br(add(seg,6))}\n`;
+  for(let i=0;i<7;i++){const d=add(seg,i),n=vis().filter(c=>(S.grid[c.id]||{})[d]).sort(ord).map(c=>c.nome);
+    t+=`\n*${NOMES[i]} ${br(d)}${i==6?' (DSR)':''}${i==0&&isInv(d)?' 📦':''}* – folgam: ${n.join(', ')||'ninguém'}`}
+  window.open('https://wa.me/?text='+encodeURIComponent(t),'_blank')}
+const lib=u=>new Promise((ok,no)=>{if(document.querySelector('script[src="'+u+'"]'))return ok();const e=document.createElement('script');e.src=u;e.onload=ok;e.onerror=no;document.head.appendChild(e)});
+const nomeT=t=>t==='Todos'?'Abertura e Fechamento':t;
+function arquivaAtual(){
+  if(!S.colabs.some(c=>Object.keys(S.grid[c.id]||{}).length))return;
+  S.historico=S.historico||[];const r={inicio:S.inicio,semanas:S.semanas||4,inv:S.inv||'',colabs:JSON.parse(JSON.stringify(S.colabs)),grid:JSON.parse(JSON.stringify(S.grid))};
+  const i=S.historico.findIndex(x=>x.inicio===r.inicio);i>=0?S.historico[i]=r:S.historico.push(r);save()
+}
+function historico(){
+  const hs=(S.historico||[]).slice().sort((a,b)=>b.inicio.localeCompare(a.inicio));
+  if(!hs.length){M('<h3>📚 Histórico de escalas</h3><p>Nenhuma escala anterior foi arquivada ainda. Ao trocar de ciclo, a escala atual será salva automaticamente aqui.</p>');return}
+  let h='<h3>📚 Histórico de escalas</h3><small>Selecione uma escala para consultar, imprimir ou excluir.</small>';
+  hs.forEach(r=>{const i=S.historico.indexOf(r);h+='<div class="li" style="display:block"><b>📅 '+br(r.inicio)+' a '+br(add(r.inicio,7*(r.semanas||4)-1))+'</b><div class="row"><button onclick="verHistorico('+i+')">👁️ Ver escala</button><button class="sec" onclick="imprimeHistorico('+i+')">🖨️ Imprimir ciclo</button><button class="sec" onclick="excluiHistorico('+i+')">🗑️ Excluir</button></div></div>'});M(h)
+}
+function marcaR(r,c,d){const g=r.grid[c.id]||{};return Object.keys(g).length?(g[d]||'T'):(g[d]||'')}
+function verHistorico(i){
+  const r=S.historico[i];if(!r)return;
+  const ds=Array.from({length:7*(r.semanas||4)},(_,n)=>add(r.inicio,n));
+  let h='<h3>📅 Escala histórica</h3><small>'+br(r.inicio)+' a '+br(ds[ds.length-1])+'</small>';
+  for(let k=0;k<ds.length;k+=7){
+    const dk=ds.slice(k,k+7);
+    h+='<h4>Semana '+(k/7+1)+' · '+br(dk[0])+' a '+br(dk[6])+'</h4><div class="w"><table style="width:100%"><tr><th class="n">Colaborador</th>'+dk.map(d=>'<th>'+NOMES[(dt(d).getDay()+6)%7]+'<br>'+br(d)+'</th>').join('')+'</tr>';
+    ['Abertura','Fechamento'].forEach(t=>{
+      const cs=r.colabs.filter(c=>c.turno===t).sort(ord);if(!cs.length)return;
+      h+='<tr class="sec"><td colspan="8">'+t+'</td></tr>';
+      cs.forEach(c=>{
+        h+='<tr><td class="n">'+esc(c.nome)+'</td>'+dk.map(d=>{const v=marcaR(r,c,d);return '<td class="'+v+'">'+(v==='D'?'DSR':v)+'</td>'}).join('')+'</tr>';
+      });
+    });
+    h+='</table></div>';
+  }
+  h+='<div class="row"><button class="sec" onclick="historico()">↩ Voltar ao histórico</button></div>';M(h)
+}
+function imprimeHistorico(i){const r=S.historico[i];if(!r)return;const bak={colabs:S.colabs,grid:S.grid,inicio:S.inicio,semanas:S.semanas,inv:S.inv};S.colabs=r.colabs;S.grid=r.grid;S.inicio=r.inicio;S.semanas=r.semanas;S.inv=r.inv||'';fm();imprimir('Todos');Object.assign(S,bak)}
+function excluiHistorico(i){const r=S.historico[i];if(!r)return;if(confirm('Excluir a escala de '+br(r.inicio)+' a '+br(add(r.inicio,7*(r.semanas||4)-1))+'?')){S.historico.splice(i,1);save();historico()}}
+function relatorio(){
+  const ds=dias(),temEscala=S.colabs.some(c=>Object.keys(S.grid[c.id]||{}).length),grupos=['Abertura','Fechamento'].map(t=>({t,cs:S.colabs.filter(c=>c.pd&&c.turno===t).sort(ord)})).filter(g=>g.cs.length);
+  if(!temEscala){M('<h3>📋 Relatório do ciclo</h3><p>A escala ainda não foi gerada para este ciclo.</p>');return}
+  let h='<h3>📋 Relatório do ciclo</h3><small>'+br(S.inicio)+' a '+br(add(S.inicio,7*S.semanas-1))+' · '+ds.length+' dias</small><div class="w" style="margin-top:10px"><table style="width:100%"><tr><th class="n">Colaborador</th><th>Folgas</th><th>DSR</th><th>Total</th><th>Trabalhados</th></tr>';
+  grupos.forEach(g=>{h+='<tr class="sec"><td colspan="5">'+g.t+'</td></tr>';g.cs.forEach(c=>{const grid=S.grid[c.id]||{},f=ds.filter(d=>grid[d]==='F').length,d=ds.filter(x=>grid[x]==='D').length;h+='<tr><td class="n">'+esc(nomeColab(c))+(c.cargo==='Encarregado'?' ★':'')+'</td><td>'+f+'</td><td>'+d+'</td><td>'+(f+d)+'</td><td>'+(ds.length-f-d)+'</td></tr>'})});
+  h+='</table></div><small style="display:block;margin-top:10px">Folgas = folgas da semana · DSR = domingos de descanso · Trabalhados = dias restantes do ciclo.</small>';M(h)
+}
+function exp(){M(`<h3>📤 Exportar escala</h3><label>Turno</label><select id="x_t">${['Todos','Abertura','Fechamento'].map(t=>`<option value="${t}"${t===S.filtro?' selected':''}>${t==='Todos'?'Os dois turnos':t}</option>`).join('')}</select>
+  <div class="row"><button onclick="saida('pdf',1)">📄 PDF · Compartilhar</button><button class="sec" onclick="saida('pdf',0)">📄 PDF · Baixar</button></div>
+  <div class="row"><button onclick="saida('xls',1)">📊 Excel · Compartilhar</button><button class="sec" onclick="saida('xls',0)">📊 Excel · Baixar</button></div>
+  <div class="row"><button onclick="saida('img',1)">🖼️ Imagem · Compartilhar</button><button class="sec" onclick="saida('img',0)">🖼️ Imagem · Baixar</button></div>
+  <div class="row"><button onclick="saida('printall')">🖨️ Imprimir ciclo (uma semana por página)</button></div>
+  <label style="margin-top:10px">Semanas para imprimir</label>
+  <div class="row">${Array.from({length:S.semanas},(_,w)=>`<label style="width:100%;font-size:14px;color:var(--tx)"><input type="checkbox" id="wk${w}" checked style="width:auto"> Semana ${w+1} · ${br(add(S.inicio,7*w))} a ${br(add(S.inicio,7*w+6))}</label>`).join('')}</div>
+  <div class="row"><button onclick="saida('printsel','semana')">🖨️ Semanas marcadas (uma por página)</button></div>
+  <div class="row"><button onclick="saida('printsel','folha')">🗓️ Mês em uma folha A4 paisagem</button></div>
+  <small>A folha do mês mostra as semanas marcadas lado a lado, com uma página por turno. Use “Os dois turnos” para sair Abertura e Fechamento em páginas separadas.</small>`)}
+function saida(f,share){const t=g$('x_t').value;
+  if(f==='printall'){fm();imprimir(t,Array.from({length:S.semanas},(_,w)=>w),'semana');return}
+  if(f==='printsel'){const ws=[];for(let w=0;w<S.semanas;w++){const e=g$('wk'+w);if(e&&e.checked)ws.push(w)}
+    if(!ws.length){alert('Marque pelo menos uma semana.');return}fm();imprimir(t,ws,share);return}
+  fm();f==='pdf'?pdf(t,share):f==='xls'?xls(t,share):imagem(t,share)}
+function imprimir(t,weeks,modo){
+  const old=document.getElementById('printArea');if(old)old.remove();
+  const ds=dias(),turnos=['Abertura','Fechamento'].filter(x=>t==='Todos'||x===t),area=document.createElement('div');area.id='printArea';area.className='printArea';
+  const leg='<div class="plegend">F = folga da semana · T = trabalhando · DSR = folga de domingo · ★ encarregado · INV = inventário</div>';
+  if(modo==='folha'){
+    turnos.forEach(x=>{const cs=S.colabs.filter(c=>c.turno===x).sort(ord);if(!cs.length)return;
+      const cols=weeks.flatMap(w=>ds.slice(w*7,w*7+7)),ini=cols[0],fim=cols[cols.length-1];
+      let h='<section class="pfolha"><h2>Escala 5x2 FLV - '+x+' · '+br(ini)+' a '+br(fim)+'</h2><table><thead><tr><th class="pn" rowspan="2">Colaborador</th>'+weeks.map(w=>'<th colspan="7" class="wk">Semana '+(w+1)+' · '+br(add(S.inicio,7*w))+' a '+br(add(S.inicio,7*w+6))+'</th>').join('')+'</tr><tr>'+cols.map((d,i)=>'<th class="'+(i%7==0?'bl':'')+'">'+NOMES[(dt(d).getDay()+6)%7][0]+'<br>'+dt(d).getDate()+'</th>').join('')+'</tr></thead><tbody>';
+      cs.forEach(c=>{h+='<tr><td class="pn">'+esc(nomeColab(c))+(c.cargo==='Encarregado'?' ★':'')+'</td>'+cols.map((d,i)=>{const v=marca(c,d);return '<td class="'+v+(i%7==0?' bl':'')+'">'+(v==='D'?'DSR':v)+'</td>'}).join('')+'</tr>'});
+      h+='<tr class="ptot"><td class="pn">Folgas no dia</td>'+cols.map((d,i)=>'<td class="'+(i%7==0?'bl':'')+'">'+cs.filter(c=>{const v=(S.grid[c.id]||{})[d];return v==='F'||v==='D'}).length+'</td>').join('')+'</tr>';
+      h+='</tbody></table>'+leg+'</section>';area.insertAdjacentHTML('beforeend',h)});
+  } else {
+    weeks.forEach(so=>{const ini=so*7,fimSemana=Math.min(ini+7,ds.length),dk=ds.slice(ini,fimSemana);
+      let h='<section class="pweek"><h2>Escala 5x2 FLV - '+nomeT(t)+' · Semana '+(so+1)+' · '+br(dk[0])+' a '+br(dk[dk.length-1])+'</h2><table><thead><tr><th class="pn">Colaborador</th>'+dk.map(d=>'<th>'+NOMES[(dt(d).getDay()+6)%7]+'<br>'+br(d)+(dt(d).getDay()===1&&isInv(d)?'<br>INV':'')+'</th>').join('')+'</tr></thead><tbody>';
+      turnos.forEach(x=>{const cs=S.colabs.filter(c=>c.turno===x).sort(ord);if(!cs.length)return;h+='<tr class="ps"><td colspan="8">'+x+'</td></tr>';cs.forEach(c=>{h+='<tr><td class="pn">'+esc(nomeColab(c))+(c.cargo==='Encarregado'?' ★':'')+'</td>'+dk.map(d=>{const v=marca(c,d);return '<td class="'+v+'">'+(v==='D'?'DSR':v)+'</td>'}).join('')+'</tr>'});h+='<tr class="ptot"><td class="pn">Folgas no dia</td>'+dk.map(d=>'<td>'+cs.filter(c=>{const v=(S.grid[c.id]||{})[d];return v==='F'||v==='D'}).length+'</td>').join('')+'</tr>'});
+      h+='</tbody></table>'+leg+'</section>';area.insertAdjacentHTML('beforeend',h)});
+  }
+  document.body.appendChild(area);document.body.classList.add('imprimindo');const fim=()=>{document.body.classList.remove('imprimindo');area.remove();window.removeEventListener('afterprint',fim)};window.addEventListener('afterprint',fim);setTimeout(()=>window.print(),250)
+}
+function entrega(blob,name,share){
+  const f=new File([blob],name,{type:blob.type});
+  if(share&&navigator.canShare&&navigator.canShare({files:[f]}))return navigator.share({files:[f],title:name}).catch(()=>{});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();
+  if(share)alert('Seu aparelho não permite compartilhar o arquivo direto. Ele foi baixado: é só anexar no WhatsApp.')}
+function xls(t,share){const ds=dias(),cs=S.colabs.filter(c=>t==='Todos'||c.turno===t).sort((a,b)=>a.turno.localeCompare(b.turno)||ord(a,b));
+  let h='<table border="1"><tr><th>Colaborador</th><th>Turno</th>'+ds.map(d=>`<th>${NOMES[(dt(d).getDay()+6)%7]} ${br(d)}</th>`).join('')+'</tr>';
+  cs.forEach(c=>{const g=S.grid[c.id]||{};h+=`<tr><td>${esc(c.nome)}${c.cargo==='Encarregado'?' ★':''}</td><td>${c.turno}</td>`+ds.map(d=>{const v=marca(c,d);return `<td align="center"${v==='F'||v==='D'||v==='T'?` bgcolor="${v==='D'?'#bbf7d0':v==='F'?'#fde68a':'#90caf9'}"`:''}>${v==='D'?'DSR':v}</td>`}).join('')+'</tr>'});
+  entrega(new Blob(['\ufeff<html><head><meta charset="utf-8"></head><body>'+h+'</table></body></html>'],{type:'application/vnd.ms-excel'}),'escala-5x2-'+S.inicio+'.xls',share)}
+async function imagem(t,share){
+  const semanas=dias(),turnos=['Abertura','Fechamento'].filter(x=>t==='Todos'||t===x),imagens=[];
+  for(let k=0;k<semanas.length;k+=7){
+    const dk=semanas.slice(k,k+7),grupos=turnos.map(x=>({x,cs:S.colabs.filter(c=>c.turno===x).sort(ord)})).filter(g=>g.cs.length);
+    const rowH=42,headH=72,titleH=62,footH=42,nameW=300,dayW=150;
+    const totalRows=grupos.reduce((n,g)=>n+1+g.cs.length,0),width=nameW+7*dayW,height=titleH+headH+totalRows*rowH+footH,scale=2;
+    const can=document.createElement('canvas');can.width=width*scale;can.height=height*scale;const q=can.getContext('2d');q.scale(scale,scale);
+    q.fillStyle='#fff';q.fillRect(0,0,width,height);q.fillStyle='#17212b';q.font='bold 28px Arial';q.fillText('Escala 5x2 FLV - '+nomeT(t),24,36);q.font='20px Arial';q.fillText('Semana '+(k/7+1)+' · '+br(dk[0])+' a '+br(dk[dk.length-1]),24,57);
+    let y=titleH;q.fillStyle='#ecf1f4';q.fillRect(0,y,width,headH);q.strokeStyle='#aab7c0';q.strokeRect(0,y,width,headH);q.fillStyle='#17212b';q.font='bold 19px Arial';q.fillText('Colaborador',16,y+42);
+    dk.forEach((d,i)=>{const x=nameW+i*dayW;q.strokeRect(x,y,dayW,headH);q.textAlign='center';q.font='bold 18px Arial';q.fillText(NOMES[(dt(d).getDay()+6)%7],x+dayW/2,y+31);q.font='17px Arial';q.fillText(br(d),x+dayW/2,y+54);if(dt(d).getDay()===1&&isInv(d)){q.font='bold 14px Arial';q.fillText('INV',x+dayW/2,y+69)}});q.textAlign='left';y+=headH;
+    grupos.forEach(g=>{q.fillStyle='#0d7ea4';q.fillRect(0,y,width,rowH);q.fillStyle='#fff';q.font='bold 20px Arial';q.fillText(g.x,16,y+28);y+=rowH;g.cs.forEach(c=>{q.fillStyle='#fff';q.fillRect(0,y,width,rowH);q.strokeStyle='#aab7c0';q.strokeRect(0,y,width,rowH);q.fillStyle='#17212b';q.font='18px Arial';q.fillText(c.nome+(c.cargo==='Encarregado'?' ★':''),16,y+27);dk.forEach((d,i)=>{const x0=nameW+i*dayW,v=marca(c,d);q.fillStyle=v==='F'?'#fde68a':v==='D'?'#bbf7d0':v==='T'?'#90caf9':'#fff';q.fillRect(x0,y,dayW,rowH);q.strokeStyle='#aab7c0';q.strokeRect(x0,y,dayW,rowH);if(v){q.fillStyle='#17212b';q.font='bold 18px Arial';q.textAlign='center';q.fillText(v==='D'?'DSR':v,x0+dayW/2,y+27);q.textAlign='left'}});y+=rowH})});
+    q.fillStyle='#4b5963';q.font='16px Arial';q.fillText('F = folga da semana · DSR = folga de domingo · ★ encarregado · INV = inventário',24,height-16);
+    const blob=await new Promise(ok=>can.toBlob(ok,'image/png'));imagens.push({blob,name:'escala-5x2-'+S.inicio+'-semana-'+(k/7+1)+'.png'});
+  }
+  const files=imagens.map(x=>new File([x.blob],x.name,{type:'image/png'}));
+  if(share&&navigator.canShare&&navigator.canShare({files}))return navigator.share({files,title:'Escala 5x2 FLV'}).catch(()=>{});
+  imagens.forEach((x,i)=>setTimeout(()=>{const a=document.createElement('a');a.href=URL.createObjectURL(x.blob);a.download=x.name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)},i*350));
+  if(share)alert('Seu aparelho não permite compartilhar as imagens diretamente. Elas foram baixadas.');
+}
+async function pdf(t,share){
+  try{await lib('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');await lib('https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js')}
+  catch(e){alert('Não consegui carregar o gerador de PDF (precisa de internet). Use Imprimir e escolha Salvar como PDF.');return}
+  const doc=new window.jspdf.jsPDF({orientation:'landscape',unit:'mm',format:'a4'}),ds=dias();
+  for(let k=0;k<ds.length;k+=7){
+    const dk=ds.slice(k,k+7);if(k)doc.addPage();
+    doc.setFontSize(12);doc.text('Escala 5x2 FLV - '+nomeT(t)+'  · Semana '+(k/7+1)+'  ('+br(dk[0])+' a '+br(dk[dk.length-1])+')',10,10);
+    const body=[];
+    ['Abertura','Fechamento'].filter(x=>t==='Todos'||t===x).forEach(x=>{
+      const cs=S.colabs.filter(c=>c.turno===x).sort(ord);if(!cs.length)return;
+      body.push([{content:x,colSpan:dk.length+1,styles:{fillColor:[13,126,164],textColor:255,halign:'left',fontStyle:'bold'}}]);
+      cs.forEach(c=>body.push([nomeColab(c)+(c.cargo==='Encarregado'?' *':''),...dk.map(d=>{const v=marca(c,d);return v==='D'?'DSR':v})]))});
+    doc.autoTable({startY:14,head:[['Colaborador',...dk.map(d=>NOMES[(dt(d).getDay()+6)%7]+'\n'+br(d)+(dt(d).getDay()===1&&isInv(d)?'\nINV':''))]],body,theme:'grid',
+      styles:{fontSize:8.5,cellPadding:1.8,halign:'center',valign:'middle',lineWidth:.15},headStyles:{fillColor:[236,241,244],textColor:30,fontSize:8},columnStyles:{0:{halign:'left',cellWidth:48}},
+      didParseCell:h=>{if(h.section==='body'&&h.column.index>0){const v=h.cell.raw;if(v==='F')h.cell.styles.fillColor=[253,230,138];if(v==='T')h.cell.styles.fillColor=[144,202,249];if(v==='DSR'){h.cell.styles.fillColor=[187,247,208];h.cell.styles.fontStyle='bold'}}}});
+    doc.setFontSize(7);doc.text('F = folga da semana   DSR = folga de domingo   * encarregado   INV = inventário',10,doc.internal.pageSize.getHeight()-6)}
+  entrega(doc.output('blob'),'escala-5x2-'+S.inicio+'.pdf',share)}
+function shareApp(){const u=location.href.split('?')[0].split('#')[0],t='Escala 5x2 FLV';
+  if(navigator.share)navigator.share({title:t,text:t+' – app de escala de folgas',url:u}).catch(()=>{});
+  else window.open('https://wa.me/?text='+encodeURIComponent(t+'\n'+u),'_blank')}
+function valUlt(nome,u,d,pd){
+  if(u&&dt(u).getDay()===0)return nome+': a última folga da semana não pode ser domingo. Use o campo do DSR.';
+  if(d&&dt(d).getDay()!==0)return nome+': o último DSR precisa ser num domingo.';
+  for(const x of [u,d])if(x&&diff(x,START)>=0)return nome+': as datas precisam ser antes de '+br(START)+'.';
+  if(d&&pd&&diff(pd,d)<14)return nome+': o primeiro DSR ('+br(pd)+') está colado no último DSR ('+br(d)+'). Entre dois DSR precisa haver pelo menos 14 dias.';
+  return ''}
+function ults(){M(`<h3>🗓️ Antes de ${br(START)}</h3><small>Para cada pessoa, informe a última folga da semana (segunda a sábado) e o último DSR (domingo) antes do início. O app usa a mais recente nas primeiras semanas para não passar de 5 dias seguidos, e confere se o primeiro DSR não fica colado no último.</small>`+S.colabs.slice().sort((a,b)=>a.turno.localeCompare(b.turno)||ord(a,b)).map(c=>`<div class="li" style="display:block"><b>${esc(c.nome)}</b>${c.cargo==='Encarregado'?' ★':''} <small>${c.turno}</small><div class="row"><div style="flex:1"><label>Última folga da semana</label><input type="date" id="u_${c.id}" value="${c.ult||''}"></div><div style="flex:1"><label>Último DSR (domingo)</label><input type="date" id="d_${c.id}" value="${c.ultd||''}"></div></div></div>`).join('')+'<div class="row"><button onclick="salvaUlt()">✔ Salvar</button></div>')}
+function salvaUlt(){const v=g$;
+  for(const c of S.colabs){const u=v('u_'+c.id),d=v('d_'+c.id);if(!u)continue;const er=valUlt(c.nome,u.value,d.value,c.pd);if(er){alert(er);return}}
+  S.colabs.forEach(c=>{const u=v('u_'+c.id),d=v('d_'+c.id);if(u){c.ult=u.value;c.ultd=d.value}});save();fm();render()}
+function mesSemanas(v){let k=Math.ceil(diff(v+'-01',START)/28);if(k<0)k=0;return{inicio:add(START,28*k),semanas:4}}
+function setMes(v){if(!v)return;const r=mesSemanas(v);
+  if(!r){alert('Não foi possível encontrar o ciclo de 4 semanas.');render();return}
+  if(r.inicio!==S.inicio){arquivaAtual();S.inicio=r.inicio;S.semanas=r.semanas;S.grid={};S.avisos=[]}SV=-2;fb();save();render()}
+function domTela(){const r=refDom();
+  const lin=c=>{const st=domSel(c);return `<div class="li"><span>${esc(c.nome)}${c.cargo==='Encarregado'?' ★':''}</span><span><button class="${st==='trab'?'':'sec'}" onclick="setDom('${c.id}','trab')">Trabalha</button> <button class="${st==='dsr'?'':'sec'}" onclick="setDom('${c.id}','dsr')">DSR</button></span></div>`};
+  const sec=t=>{const cs=S.colabs.filter(c=>c.turno===t).sort(ord);if(!cs.length)return'';return `<h4>${t} · DSR ${cs.filter(c=>domSel(c)==='dsr').length} · Trabalha ${cs.filter(c=>domSel(c)==='trab').length}</h4>`+cs.map(lin).join('')};
+  M(`<h3>📅 Domingo ${br(r)}</h3><small>Marque quem trabalha e quem fica de DSR. Em ${br(add(r,7))} o app inverte, e assim por diante. Toque de novo no botão para limpar.</small>`+sec('Abertura')+sec('Fechamento'))}
+function setDom(id,v){const c=pes(id),n=domSel(c)===v?'':v,pd=domPd(n),o=confEnc({...c,pd});
+  if(o){alert(msgEnc(c,o));return}
+  const er=valUlt(c.nome,c.ult,c.ultd,pd);if(er){alert(er);return}
+  c.pd=pd;c.prov=false;if(!pd)delete S.grid[id];save();
+  if(pd&&Object.keys(S.grid[id]||{}).length)gerar(id);
+  domTela();render()}
+const fb=()=>{const b=g$('bar');if(b)b.remove()};
+function posGerar(){fb();const b=document.createElement('div');b.id='bar';b.className='bar no';
+  b.innerHTML=`<b>✅ Escala gerada</b> <small>Confira a tabela acima. Os domingos não mudam.</small><div class="row"><button onclick="fb()">✔ Manter</button><button class="sec" onclick="S.seed++;fb();gerarLoad(null,1)">🔄 Outra (só dias da semana)</button>${S.prev&&S.prev!=='{}'?'<button class="sec" onclick="volta()">↩️ Anterior</button>':''}</div>`;
+  document.body.appendChild(b);
+  const w=document.querySelector('.w');if(w&&w.scrollIntoView)w.scrollIntoView({behavior:'smooth'})}
+function volta(){S.grid=JSON.parse(S.prev);S.prev='';save();fb();render()}
+function render(){
+  const nav=document.querySelector('nav'),sr=g$('sr');if(sr)sr.style.display=ENTROU?'':'none';if(!ENTROU){const t=g$('tituloApp'),sb=g$('subtituloApp');if(t)t.textContent='🥬 Escala 5x2';if(sb)sb.textContent='Escolha seu perfil para entrar';document.getElementById('app').innerHTML=S.perfilTemp?vInicio():vEntrada();if(nav)nav.style.display='none';return}if(nav)nav.style.display='flex';document.getElementById('app').innerHTML=S.tab==='equipe'?vEquipe():vEscala();aplicaIdentidade();document.getElementById('b1').className=S.tab==='escala'?'on':'sec';document.getElementById('b2').className=S.tab==='equipe'?'on':'sec'}
+function escuro(){return S.tema==='dark'||(!S.tema&&matchMedia('(prefers-color-scheme:dark)').matches)}
+function aplicaTema(){const r=document.documentElement;S.tema?r.setAttribute('data-t',S.tema):r.removeAttribute('data-t');document.getElementById('tm').textContent=escuro()?'☀️':'🌙'}
+function tema(){S.tema=escuro()?'light':'dark';save();aplicaTema()}
+function migrarLegado(){
+  if((S.historico||[]).length||S.inicio<=START)return;
+  const r={inicio:START,semanas:4,inv:S.inv||'',colabs:JSON.parse(JSON.stringify(S.colabs)),grid:{}};let achou=false;
+  Object.entries(S.grid||{}).forEach(([id,g])=>{Object.entries(g||{}).forEach(([d,v])=>{if(d>=START&&d<S.inicio){r.grid[id]=r.grid[id]||{};r.grid[id][d]=v;achou=true}})});
+  if(achou){S.historico.push(r);save()}
+}
+render();aplicaTema();try{if(!localStorage.getItem(TUTK)){localStorage.setItem(TUTK,'1');tut(0)}}catch(e){}
+try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
+// Prévia de teste: verificação de versão e Service Worker desativados para não interferir no app publicado.
+</script></body></html>
