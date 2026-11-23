@@ -2,7 +2,7 @@
 <html lang="pt-BR"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#0D7EA4">
-<meta name="app-versao" content="1.4">
+<meta name="app-versao" content="1.5">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon-192.png?v=2">
 <link rel="apple-touch-icon" href="icon-192.png?v=2">
@@ -237,7 +237,7 @@ function invSelecionar(P,cfg,usados,seed){
   });
   if(cfg.enc){const pe=esc.filter(c=>trab(c,D)&&!ja.has(c.id));encPool=pe;
     if(!pe.length)falta.push('Encarregado: nenhum disponível no dia do inventário');
-    else{pe.sort((a,b)=>((cnt[a.id]||0)*3+rep(a))-((cnt[b.id]||0)*3+rep(b)));const c=pe[0];part.push({id:c.id,nome:c.nome,turno:c.turno,cargo:'Encarregado'})}}
+    else{const tt=new Set(turnos.map(x=>x[0])),kk=c=>(tt.has(c.turno)?0:1000)+(cnt[c.id]||0)*3+rep(c);pe.sort((a,b)=>kk(a)-kk(b));const c=pe[0];part.push({id:c.id,nome:c.nome,turno:c.turno,cargo:'Encarregado'})}}
   if(falta.length)return{erro:'Não há colaboradores suficientes:\n• '+falta.join('\n• ')};
   if(!nIn)av.push('O dia seguinte está fora do ciclo gerado; a análise dele foi ignorada.');
   return{part,aviso:av.join(' '),pls,encPool};
@@ -257,8 +257,9 @@ function invCombos(P,cfg,r,usados,seed){
   let acc=[[]],parcial=false;
   for(const L of listas){const nx=[];for(const a of acc){for(const b of L){nx.push(a.concat(b));if(nx.length>=40000){parcial=true;break}}if(parcial)break}acc=nx}
   const lista=acc.map(sel=>{const ds=sel.map(x=>fd(x.c)),rp=ds.length-new Set(ds).size,part=sel.map(x=>({id:x.c.id,nome:x.c.nome,turno:x.t,cargo:x.cargo}));
-    return{part,custo:rp*20+sel.reduce((s,x)=>s+(cnt[x.c.id]||0)*3,0)+(hs(invChave(part)+seed)%90)/100}}).sort((a,b)=>a.custo-b.custo);
+    return{part,custo:sel.filter(x=>x.cargo==='Encarregado'&&!r.pls.some(q=>q[0]===x.t)).length*1000+rp*20+sel.reduce((s,x)=>s+(cnt[x.c.id]||0)*3,0)+(hs(invChave(part)+seed)%90)/100}}).sort((a,b)=>a.custo-b.custo);
   lista.forEach((x,i)=>x.pos=i+1);return{lista,total:lista.length,parcial}}
+function invAviso(r,x){let a=r.aviso||'';const e=x.part.find(p=>p.cargo==='Encarregado');if(e&&!r.pls.some(q=>q[0]===e.turno))a+=(a?' ':'')+'O encarregado escolhido é do turno '+e.turno+', diferente do turno do inventário (não havia outro disponível).';return a}
 function invGerar(outra){
   invLerForm();IV.msg='';const P=invPerfil(IV.p);
   if(!P){IV.msg='Este perfil ainda não tem equipe cadastrada.';rInv();return}
@@ -271,11 +272,11 @@ function invGerar(outra){
   const r=invSelecionar(P,cfg,usados,0);if(r.erro){IV.msg=r.erro;rInv();return}
   const L=invCombos(P,cfg,r,usados,mesma.length),prox=L.lista.find(x=>!existentes.has(invChave(x.part)));
   if(!prox){IV.msg='Existem apenas '+L.total+(L.parcial?' (ou mais)':'')+' combinação(ões) possível(is) com essas regras, e todas já foram geradas. Disponíveis no dia: '+r.pls.map(([t,n,p])=>t+' '+p.length).join(', ')+'. Para ter novas opções, mude a data, o turno ou as quantidades.';rInv();return}
-  d.cfg=cfg;d.combos.unshift({id:uid(),criado:Date.now(),cfg,part:prox.part,salva:false,aviso:r.aviso||'',pos:prox.pos,total:L.total});d.combos=d.combos.slice(0,40);
+  d.cfg=cfg;d.combos.unshift({id:uid(),criado:Date.now(),cfg,part:prox.part,salva:false,aviso:invAviso(r,prox),pos:prox.pos,total:L.total});d.combos=d.combos.slice(0,40);
   invSave(d);IV.ci=0;IV.msg='';rInv()}
 function invAtual(){const d=invD();return d.combos[IV.ci]||null}
 function invTrocar(i,id){const d=invD(),c=d.combos[IV.ci];if(!c||!id)return;const P=invPerfil(IV.p),n=P.colabs.find(x=>x.id===id);
-  if(!n||c.part.some(p=>p.id===id))return;const o=c.part[i];c.part[i]={id:n.id,nome:n.nome,turno:o.turno,cargo:n.cargo};invSave(d);rInv()}
+  if(!n||c.part.some(p=>p.id===id))return;const o=c.part[i];c.part[i]={id:n.id,nome:n.nome,turno:n.cargo==='Encarregado'?n.turno:o.turno,cargo:n.cargo};invSave(d);rInv()}
 function invSalvar(){const d=invD();if(!d.combos[IV.ci])return;d.combos[IV.ci].salva=true;invSave(d);rInv()}
 function invApagar(i){const d=invD();if(!confirm('Excluir esta combinação?'))return;d.combos.splice(i,1);IV.ci=d.combos.length?0:-1;invSave(d);rInv()}
 function invTexto(c){const t=['Abertura','Fechamento'].filter(x=>c.part.some(p=>p.turno===x&&p.cargo!=='Encarregado'));
@@ -308,8 +309,8 @@ function rInv(){
    +'<div class="row"><button onclick="invGerar(false)">📦 GERAR EQUIPE DE INVENTÁRIO</button>'+(d.combos.length?'<button class="sec" onclick="invGerar(true)">🔀 GERAR OUTRA COMBINAÇÃO</button>':'')+'</div>'
    +(IV.msg?'<div class="warn" style="white-space:pre-line">⚠ '+esc(IV.msg)+'</div>':'')+'<small>Só entram colaboradores que trabalham no dia do inventário. As escolhas são espalhadas por dias de folga diferentes, para não faltar gente no setor. A escala normal não é alterada.</small></div>';
   if(c){const P=invPerfil(IV.p)||{colabs:[]},tur=['Abertura','Fechamento'].filter(x=>c.part.some(p=>p.turno===x&&p.cargo!=='Encarregado'));
-    const lin=(p,i)=>{const op=P.colabs.filter(x=>x.turno===p.turno&&x.cargo===p.cargo&&!c.part.some(q=>q.id===x.id)&&!(P.grid[x.id]||{})[c.cfg.data]&&Object.keys(P.grid[x.id]||{}).length);
-      return `<div class="li"><span>${esc(p.nome)}${p.cargo==='Encarregado'?' ★':''}<br><small>próxima folga: ${invFolga(P,p.id,c.cfg.data)}</small></span><select class="no" style="width:130px;padding:4px" onchange="invTrocar(${i},this.value)"><option value="">Trocar…</option>${op.map(x=>`<option value="${x.id}">${esc(x.nome)}</option>`).join('')}</select></div>`};
+    const lin=(p,i)=>{const enc=p.cargo==='Encarregado',op=P.colabs.filter(x=>(enc?x.cargo==='Encarregado':(x.turno===p.turno&&x.cargo===p.cargo))&&!c.part.some(q=>q.id===x.id)&&!(P.grid[x.id]||{})[c.cfg.data]&&Object.keys(P.grid[x.id]||{}).length);
+      return `<div class="li"><span>${esc(p.nome)}${p.cargo==='Encarregado'?' ★':''}<br><small>próxima folga: ${invFolga(P,p.id,c.cfg.data)}</small></span><select class="no" style="width:130px;padding:4px" onchange="invTrocar(${i},this.value)"><option value="">${op.length?'Trocar…':'Sem outro disponível'}</option>${op.map(x=>`<option value="${x.id}">${esc(x.nome)}${enc?' ('+x.turno+')':''}</option>`).join('')}</select></div>`};
     h+=`<div class="card"><h4 style="margin-top:0">📅 ${fdata(c.cfg.data)} ${c.salva?'· ★ salva':''}${c.total?' · opção '+c.pos+' de '+c.total:''}</h4>`+tur.map(x=>{const l=c.part.map((p,i)=>[p,i]).filter(([p])=>p.turno===x&&p.cargo!=='Encarregado');return `<b>${x} (${l.length})</b>`+l.map(([p,i])=>lin(p,i)).join('')}).join('')
      +(c.part.some(p=>p.cargo==='Encarregado')?'<b>Encarregado</b>'+c.part.map((p,i)=>[p,i]).filter(([p])=>p.cargo==='Encarregado').map(([p,i])=>lin(p,i)).join(''):'')
      +`<p><b>Total: ${c.part.length} participante(s)</b></p>${c.aviso?'<small>'+esc(c.aviso)+'</small>':''}<div class="row no"><button onclick="invSalvar()">💾 Salvar esta equipe</button><button class="sec" onclick="invZap()">📲 WhatsApp</button><button class="sec" onclick="invImprimir()">🖨️ Imprimir</button></div></div>`}
