@@ -2,7 +2,7 @@
 <html lang="pt-BR"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#0D7EA4">
-<meta name="app-versao" content="1.1">
+<meta name="app-versao" content="1.2">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon-192.png?v=2">
 <link rel="apple-touch-icon" href="icon-192.png?v=2">
@@ -40,7 +40,7 @@ td.D{font-size:10px;font-weight:700}.pt{display:none}@media print{.pt{display:bl
 <nav><button id="b1" onclick="go('escala')">📅 Escala</button><button id="b2" class="sec" onclick="go('equipe')">👥 Equipe</button></nav>
 <main id="app"></main>
 <script>
-let ENTROU=false,SV=-2; // SV: semana em exibição (-1 = ciclo todo) // tela de entrada (sem senha) a cada abertura
+let ENTROU=false,SV=-2,INV=false; // SV: semana em exibição (-1 = ciclo todo) // tela de entrada (sem senha) a cada abertura
 // ===== PARÂMETROS =====
 // Peso de cada dia (Seg..Sex): quanto maior, menos folgas o app coloca nesse dia.
 const W=[3,1,4,1,1]; // Seg 3, Ter 1, Qua 4 (quarta verde), Qui 1, Sex 1
@@ -202,12 +202,110 @@ function checaVersao(){
   fetch('index.html?v='+Date.now(),{cache:'no-store'}).then(r=>r.text()).then(t=>{
     const m=t.match(/name="app-versao" content="([^"]+)"/),v=document.querySelector('meta[name=app-versao]');
     if(m&&v&&m[1]!==v.content&&!g$('nv')){const b=document.createElement('div');b.id='nv';b.className='bar no';b.style.cssText='top:0;bottom:auto;border-top:0;border-bottom:1px solid var(--ln);box-shadow:0 4px 12px #0003';b.innerHTML='<b>🆕 Nova versão disponível</b> <button onclick="location.reload()">Atualizar</button>';document.body.appendChild(b)}}).catch(()=>{})}
+// ===== MÓDULO ESCALA DE INVENTÁRIO (independente: só LÊ os perfis, grava na própria chave) =====
+const INVK='escala5x2_inv_v1';
+let IV={p:'setor',data:'',turno:'AF',na:2,nf:2,enc:true,ci:-1,msg:'',trocaIdx:-1};
+const invAll=()=>{try{return JSON.parse(localStorage.getItem(INVK)||'{}')||{}}catch(e){return{}}};
+const invD=()=>{const a=invAll();return a[IV.p]||{cfg:null,combos:[]}};
+const invSave=d=>{const a=invAll();a[IV.p]=d;try{localStorage.setItem(INVK,JSON.stringify(a))}catch(e){}};
+const invPerfil=p=>{try{return JSON.parse(localStorage.getItem(p==='gerente'?KEYG:KEY0)||'null')}catch(e){return null}}; // somente leitura
+const NSEM=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+const fdata=d=>NSEM[dt(d).getDay()]+' '+br(d)+'/'+d.slice(0,4);
+// Núcleo da seleção (função pura: recebe dados, não toca no app). seed 0 = melhor combinação; seed>0 = variações válidas.
+function invSelecionar(P,cfg,usados,seed){
+  const g=id=>(P.grid||{})[id]||{},D=cfg.data,N=add(D,1);
+  const ini=P.inicio,fim=add(ini,7*(P.semanas||4)-1);
+  if(D<ini||D>fim)return{erro:'O dia '+fdata(D)+' está fora da escala gerada ('+br(ini)+' a '+br(fim)+'). Gere a escala normal desse período ou escolha outra data.'};
+  const colabs=(P.colabs||[]).filter(c=>Object.keys(g(c.id)).length);
+  if(!colabs.length)return{erro:'A escala normal ainda não foi gerada neste perfil. Gere a escala 5x2 primeiro.'};
+  const trab=(c,d)=>!g(c.id)[d],nIn=N<=fim; // trabalha no dia d (não está de F nem de DSR)
+  const cnt={};(usados||[]).forEach(id=>cnt[id]=(cnt[id]||0)+1);
+  const rnd=seed?(()=>{let x=seed*9301+49297;return()=>(x=(x*9301+49297)%233280)/233280})():()=>0;
+  const falta=[],av=[],part=[];const turnos=[];if(cfg.turno!=='F')turnos.push(['Abertura',+cfg.na]);if(cfg.turno!=='A')turnos.push(['Fechamento',+cfg.nf]);
+  const esc=colabs.filter(c=>c.cargo==='Encarregado'),ja=new Set();
+  turnos.forEach(([t,n])=>{
+    const pool=colabs.filter(c=>c.cargo!=='Encarregado'&&c.turno===t&&trab(c,D));
+    if(pool.length<n){falta.push(t+': precisa de '+n+' e há '+pool.length+' disponível(is)');}
+    const tot=colabs.filter(c=>c.cargo!=='Encarregado'&&c.turno===t&&trab(c,D)).length;
+    // quem NÃO trabalha no dia seguinte é preferido; depois, quem foi menos convocado; seed varia o desempate
+    const sc=c=>(nIn&&trab(c,N)?10:0)+(cnt[c.id]||0)*3+rnd()*4;
+    pool.sort((a,b)=>sc(a)-sc(b)).slice(0,n).forEach(c=>{part.push({id:c.id,nome:c.nome,turno:t,cargo:c.cargo});ja.add(c.id)});
+    if(pool.length>=n&&tot-n<1)av.push('Atenção: no '+t+' sobrariam '+(tot-n)+' colaborador(es) da equipe normal no dia do inventário.');
+  });
+  if(cfg.enc){const pe=esc.filter(c=>trab(c,D)&&!ja.has(c.id));
+    if(!pe.length)falta.push('Encarregado: nenhum disponível no dia do inventário');
+    else{pe.sort((a,b)=>((nIn&&trab(a,N)?10:0)+(cnt[a.id]||0)*3)-((nIn&&trab(b,N)?10:0)+(cnt[b.id]||0)*3));const c=pe[0];part.push({id:c.id,nome:c.nome,turno:c.turno,cargo:'Encarregado'})}}
+  if(falta.length)return{erro:'Não há colaboradores suficientes:\n• '+falta.join('\n• ')};
+  if(!nIn)av.push('O dia seguinte está fora do ciclo gerado; a análise dele foi ignorada.');
+  return{part,aviso:av.join(' ')};
+}
+const invChave=part=>part.map(p=>p.id).sort().join(',');
+function invLerForm(){const v=id=>g$(id)?g$(id).value:null;
+  if(v('iv_p'))IV.p=v('iv_p');if(v('iv_d'))IV.data=v('iv_d');if(v('iv_t'))IV.turno=v('iv_t');
+  if(v('iv_na')!==null)IV.na=Math.max(0,+v('iv_na')||0);if(v('iv_nf')!==null)IV.nf=Math.max(0,+v('iv_nf')||0);if(v('iv_e'))IV.enc=v('iv_e')==='1'}
+function invGerar(outra){
+  invLerForm();IV.msg='';const P=invPerfil(IV.p);
+  if(!P){IV.msg='Este perfil ainda não tem equipe cadastrada.';rInv();return}
+  if(!IV.data){IV.msg='Escolha a data do inventário.';rInv();return}
+  if((IV.turno!=='F'&&IV.na<1)||(IV.turno!=='A'&&IV.nf<1)){IV.msg='Informe a quantidade de colaboradores do turno escolhido.';rInv();return}
+  const d=invD(),cfg={data:IV.data,turno:IV.turno,na:IV.na,nf:IV.nf,enc:IV.enc};
+  const mesma=d.combos.filter(c=>c.cfg.data===cfg.data&&c.cfg.turno===cfg.turno&&c.cfg.na===cfg.na&&c.cfg.nf===cfg.nf&&c.cfg.enc===cfg.enc);
+  const usados=d.combos.filter(c=>c.salva).flatMap(c=>c.part.map(p=>p.id)); // equilibra as convocações já salvas
+  const existentes=new Set(mesma.map(c=>invChave(c.part)));let r=null;
+  for(let t=0;t<(outra?300:1);t++){const x=invSelecionar(P,cfg,usados,outra?t+1+mesma.length*7:0);if(x.erro){r=x;break}if(!existentes.has(invChave(x.part))){r=x;break}r=null}
+  if(!r){IV.msg='Não existe outra combinação diferente com essas regras. As anteriores foram mantidas.';rInv();return}
+  if(r.erro){IV.msg=r.erro;rInv();return}
+  d.cfg=cfg;d.combos.unshift({id:uid(),criado:Date.now(),cfg,part:r.part,salva:false,aviso:r.aviso||''});d.combos=d.combos.slice(0,40);
+  invSave(d);IV.ci=0;IV.msg='';rInv()}
+function invAtual(){const d=invD();return d.combos[IV.ci]||null}
+function invTrocar(i,id){const d=invD(),c=d.combos[IV.ci];if(!c||!id)return;const P=invPerfil(IV.p),n=P.colabs.find(x=>x.id===id);
+  if(!n||c.part.some(p=>p.id===id))return;const o=c.part[i];c.part[i]={id:n.id,nome:n.nome,turno:o.turno,cargo:n.cargo};invSave(d);rInv()}
+function invSalvar(){const d=invD();if(!d.combos[IV.ci])return;d.combos[IV.ci].salva=true;invSave(d);rInv()}
+function invApagar(i){const d=invD();if(!confirm('Excluir esta combinação?'))return;d.combos.splice(i,1);IV.ci=d.combos.length?0:-1;invSave(d);rInv()}
+function invTexto(c){const t=['Abertura','Fechamento'].filter(x=>c.part.some(p=>p.turno===x&&p.cargo!=='Encarregado'));
+  let m='*📦 INVENTÁRIO*\n📅 '+fdata(c.cfg.data)+'\n';
+  t.forEach(x=>{const l=c.part.filter(p=>p.turno===x&&p.cargo!=='Encarregado');m+='\n*'+x+'* ('+l.length+')\n'+l.map(p=>'• '+p.nome).join('\n')+'\n'});
+  const e=c.part.filter(p=>p.cargo==='Encarregado');if(e.length)m+='\n*Encarregado:* '+e.map(p=>p.nome+' ('+p.turno+')').join(', ')+'\n';
+  return m+'\nTotal: '+c.part.length+' participante(s)'}
+function invZap(){const c=invAtual();if(c)window.open('https://wa.me/?text='+encodeURIComponent(invTexto(c)),'_blank')}
+function invImprimir(){const c=invAtual();if(!c)return;const old=g$('printArea');if(old)old.remove();
+  const a=document.createElement('div');a.id='printArea';a.className='printArea';
+  const t=['Abertura','Fechamento'].filter(x=>c.part.some(p=>p.turno===x&&p.cargo!=='Encarregado'));
+  let h='<section class="pweek"><h2>Escala de Inventário · '+fdata(c.cfg.data)+'</h2>';
+  t.forEach(x=>{const l=c.part.filter(p=>p.turno===x&&p.cargo!=='Encarregado');h+='<table><thead><tr><th class="pn" colspan="2">'+x+' · '+l.length+' colaborador(es)</th></tr></thead><tbody>'+l.map((p,i)=>'<tr><td style="width:12%">'+(i+1)+'</td><td class="pn" style="text-align:left">'+esc(p.nome)+'</td></tr>').join('')+'</tbody></table><br>'});
+  const e=c.part.filter(p=>p.cargo==='Encarregado');if(e.length)h+='<table><tbody><tr><th style="width:30%">Encarregado</th><td style="text-align:left;padding-left:6px">'+e.map(p=>esc(p.nome)+' ('+p.turno+')').join(', ')+'</td></tr></tbody></table><br>';
+  h+='<div class="plegend">Total: '+c.part.length+' participante(s) · Desenvolvido por William Jesus</div></section>';
+  a.innerHTML=h;document.body.appendChild(a);document.body.classList.add('imprimindo');
+  const fim=()=>{document.body.classList.remove('imprimindo');a.remove();window.removeEventListener('afterprint',fim)};window.addEventListener('afterprint',fim);setTimeout(()=>window.print(),80)}
+function abrirInv(){INV=true;IV.msg='';IV.ci=-1;const ps=['setor','gerente'].filter(p=>invPerfil(p));IV.p=ps.includes(IV.p)?IV.p:(ps[0]||'setor');
+  const P=invPerfil(IV.p);if(!IV.data&&P&&P.inicio)IV.data=P.inicio;const d=invD();if(d.cfg){IV.turno=d.cfg.turno;IV.na=d.cfg.na;IV.nf=d.cfg.nf;IV.enc=d.cfg.enc;IV.data=d.cfg.data}
+  if(d.combos.length)IV.ci=0;render()}
+function sairInv(){INV=false;IV.msg='';render()}
+function rInv(){
+  const t=g$('tituloApp'),sb=g$('subtituloApp'),nav=document.querySelector('nav'),sr=g$('sr');if(t)t.textContent='📦 Escala de Inventário';if(sb)sb.textContent='Equipe do inventário por setor';if(nav)nav.style.display='none';if(sr)sr.style.display='none';
+  const ps=['setor','gerente'].filter(p=>invPerfil(p));if(!ps.length){g$('app').innerHTML='<div class="card">Nenhum perfil tem equipe cadastrada ainda. Entre como <b>Encarregado de setor</b>, cadastre a equipe e gere a escala 5x2.</div><div class="row"><button class="sec" onclick="sairInv()">← Voltar à tela principal</button></div>';return}
+  const d=invD(),c=invAtual(),nomeP=p=>{const x=invPerfil(p);return(p==='gerente'?'Gerente':'Encarregado de setor')+(x&&x.setor?' — '+x.setor:'')};
+  let h='<div class="row no"><button class="sec" onclick="sairInv()">← Voltar à tela principal</button></div><div class="card no">'
+   +'<label>Equipe de qual perfil/setor</label><select id="iv_p" onchange="invLerForm();IV.ci=-1;abrirInv()">'+ps.map(p=>`<option value="${p}"${p===IV.p?' selected':''}>${esc(nomeP(p))}</option>`).join('')+'</select>'
+   +'<div class="row"><div style="flex:1"><label>Data do inventário</label><input type="date" id="iv_d" value="'+IV.data+'"></div><div style="flex:1"><label>Turno</label><select id="iv_t" onchange="invLerForm();rInv()">'+[['A','Abertura'],['F','Fechamento'],['AF','Abertura e fechamento']].map(([v,n])=>`<option value="${v}"${IV.turno===v?' selected':''}>${n}</option>`).join('')+'</select></div></div>'
+   +'<div class="row">'+(IV.turno!=='F'?`<div style="flex:1"><label>Colaboradores na abertura</label><input type="number" min="0" id="iv_na" value="${IV.na}"></div>`:'')+(IV.turno!=='A'?`<div style="flex:1"><label>Colaboradores no fechamento</label><input type="number" min="0" id="iv_nf" value="${IV.nf}"></div>`:'')+'<div style="flex:1"><label>Encarregado participa?</label><select id="iv_e"><option value="1"'+(IV.enc?' selected':'')+'>Sim</option><option value="0"'+(IV.enc?'':' selected')+'>Não</option></select></div></div>'
+   +'<div class="row"><button onclick="invGerar(false)">📦 GERAR EQUIPE DE INVENTÁRIO</button>'+(d.combos.length?'<button class="sec" onclick="invGerar(true)">🔀 GERAR OUTRA COMBINAÇÃO</button>':'')+'</div>'
+   +(IV.msg?'<div class="warn" style="white-space:pre-line">⚠ '+esc(IV.msg)+'</div>':'')+'<small>Só entram colaboradores que trabalham no dia do inventário. Quem folga no dia seguinte é preferido. A escala normal não é alterada.</small></div>';
+  if(c){const P=invPerfil(IV.p)||{colabs:[]},tur=['Abertura','Fechamento'].filter(x=>c.part.some(p=>p.turno===x&&p.cargo!=='Encarregado'));
+    const lin=(p,i)=>{const op=P.colabs.filter(x=>x.turno===p.turno&&x.cargo===p.cargo&&!c.part.some(q=>q.id===x.id)&&!(P.grid[x.id]||{})[c.cfg.data]&&Object.keys(P.grid[x.id]||{}).length);
+      return `<div class="li"><span>${esc(p.nome)}${p.cargo==='Encarregado'?' ★':''}</span><select class="no" style="width:130px;padding:4px" onchange="invTrocar(${i},this.value)"><option value="">Trocar…</option>${op.map(x=>`<option value="${x.id}">${esc(x.nome)}</option>`).join('')}</select></div>`};
+    h+=`<div class="card"><h4 style="margin-top:0">📅 ${fdata(c.cfg.data)} ${c.salva?'· ★ salva':''}</h4>`+tur.map(x=>{const l=c.part.map((p,i)=>[p,i]).filter(([p])=>p.turno===x&&p.cargo!=='Encarregado');return `<b>${x} (${l.length})</b>`+l.map(([p,i])=>lin(p,i)).join('')}).join('')
+     +(c.part.some(p=>p.cargo==='Encarregado')?'<b>Encarregado</b>'+c.part.map((p,i)=>[p,i]).filter(([p])=>p.cargo==='Encarregado').map(([p,i])=>lin(p,i)).join(''):'')
+     +`<p><b>Total: ${c.part.length} participante(s)</b></p>${c.aviso?'<small>'+esc(c.aviso)+'</small>':''}<div class="row no"><button onclick="invSalvar()">💾 Salvar esta equipe</button><button class="sec" onclick="invZap()">📲 WhatsApp</button><button class="sec" onclick="invImprimir()">🖨️ Imprimir</button></div></div>`}
+  if(d.combos.length)h+='<h4 class="no">Combinações geradas</h4><div class="no">'+d.combos.map((x,i)=>`<div class="li" style="${i===IV.ci?'outline:2px solid var(--pri)':''}"><span onclick="IV.ci=${i};rInv()" style="flex:1;cursor:pointer">${fdata(x.cfg.data)} · ${x.part.length} pessoa(s)${x.salva?' ★':''}</span><button class="sec" style="padding:4px 10px" onclick="invApagar(${i})">🗑️</button></div>`).join('')+'</div>';
+  g$('app').innerHTML=h}
+// ===== FIM DO MÓDULO DE INVENTÁRIO =====
 function infoPerfil(p){let d=null;try{d=JSON.parse(localStorage.getItem(p==='gerente'?KEYG:KEY0)||'null')}catch(e){}
   return d&&((d.colabs||[]).length||Object.keys(d.grid||{}).length||d.perfil)?d:null}
 function vEntrada(){
   const bt=(p,ic,tt,sub)=>{const d=infoPerfil(p);return `<button class="start-choice" onclick="abrir('${p}')"><span>${ic}</span><b>${tt}</b><small>${d?'Entrar'+(d.setor?' — '+esc(d.setor):'')+' · '+(d.colabs||[]).length+' pessoa(s)':'Primeiro acesso: '+sub}</small></button>`};
   return `<div class="start"><div class="start-box"><div class="start-logo">🥬</div><h2>Escala 5x2</h2><p>Escolha como vai usar o app. Cada perfil tem seus próprios dados, guardados neste aparelho.</p>
-  <div class="start-choices">${bt('setor','👤','Encarregado de setor','cadastre sua equipe')}${bt('gerente','👥','Gerente','cadastre os encarregados')}</div>
+  <div class="start-choices">${bt('setor','👤','Encarregado de setor','cadastre sua equipe')}${bt('gerente','👥','Gerente','cadastre os encarregados')}<button class="start-choice" onclick="abrirInv()"><span>📦</span><b>Escala de inventário</b><small>monte a equipe do inventário</small></button></div>
   ${lembreteBk()}<div class="row" style="justify-content:center;margin-top:14px"><button class="sec" onclick="tut(0)">📖 Como instalar e usar</button></div>
   <h4 style="margin-top:22px">💾 Backup dos dados</h4><small style="display:block">Salva os dois perfis (equipe, escala e histórico) em um arquivo. Faça de vez em quando e antes de mudar o app.</small>
   <div class="row" style="justify-content:center;margin-top:10px"><button onclick="backup(1)">📤 Compartilhar backup</button><button class="sec" onclick="backup(0)">⬇️ Baixar backup</button><button class="sec" onclick="g$('bk_file').click()">📥 Restaurar backup</button></div>
@@ -225,6 +323,7 @@ function sair(){save();ENTROU=false;S.perfilTemp='';render()}
 function backup(share){
   if(ENTROU)save();try{localStorage.setItem('escala5x2_bk',Date.now())}catch(e){}const dados={};
   for(const [k,key] of [['setor',KEY0],['gerente',KEYG]]){try{const d=JSON.parse(localStorage.getItem(key)||'null');if(d)dados[k]=d}catch(e){}}
+  try{const iv=JSON.parse(localStorage.getItem(INVK)||'null');if(iv)dados.inv=iv}catch(e){}
   const n=new Date(),p=x=>String(x).padStart(2,'0'),o={app:'escala5x2-flv',versao:2,criado:n.toISOString(),dados};
   entrega(new Blob([JSON.stringify(o)],{type:'application/json'}),'backup-escala-5x2-'+n.getFullYear()+p(n.getMonth()+1)+p(n.getDate())+'.json',share)}
 function restaurar(inp){
@@ -235,7 +334,7 @@ function restaurar(inp){
     const q=x=>x?x.colabs.length+' pessoa(s)':'sem dados';
     if(!confirm('Restaurar o backup de '+(o.criado||'').slice(0,10)+'?\nEncarregado de setor: '+q(set)+'\nGerente: '+q(ger)+'\nOs dados atuais desses perfis neste aparelho serão substituídos.'))return;
     try{if(set)localStorage.setItem(KEY0+'_antes',localStorage.getItem(KEY0)||'');if(ger)localStorage.setItem(KEYG+'_antes',localStorage.getItem(KEYG)||'')}catch(e){}
-    if(set)localStorage.setItem(KEY0,JSON.stringify(set));if(ger)localStorage.setItem(KEYG,JSON.stringify(ger));location.reload()}catch(e){alert('Arquivo de backup inválido. Use um arquivo gerado pelo botão Backup deste app.')}};
+    if(o.dados.inv&&typeof o.dados.inv==='object')localStorage.setItem(INVK,JSON.stringify(o.dados.inv));if(set)localStorage.setItem(KEY0,JSON.stringify(set));if(ger)localStorage.setItem(KEYG,JSON.stringify(ger));location.reload()}catch(e){alert('Arquivo de backup inválido. Use um arquivo gerado pelo botão Backup deste app.')}};
   r.readAsText(f);inp.value=''}
 function vEscala(){
   const ds0=dias(),p=problemas();if(SV===-2){const h=diff(iso(new Date()),S.inicio);SV=h>=0&&h<7*S.semanas?Math.floor(h/7):0}const ds=SV<0?ds0:ds0.slice(SV*7,SV*7+7);
@@ -494,6 +593,7 @@ function posGerar(){fb();const b=document.createElement('div');b.id='bar';b.clas
   const w=document.querySelector('.w');if(w&&w.scrollIntoView)w.scrollIntoView({behavior:'smooth'})}
 function volta(){S.grid=JSON.parse(S.prev);S.prev='';save();fb();render()}
 function render(){
+  if(INV){rInv();return}
   const nav=document.querySelector('nav'),sr=g$('sr');if(sr)sr.style.display=ENTROU?'':'none';if(!ENTROU){const t=g$('tituloApp'),sb=g$('subtituloApp');if(t)t.textContent='🥬 Escala 5x2';if(sb)sb.textContent='Escolha seu perfil para entrar';document.getElementById('app').innerHTML=S.perfilTemp?vInicio():vEntrada();if(nav)nav.style.display='none';return}if(nav)nav.style.display='flex';document.getElementById('app').innerHTML=S.tab==='equipe'?vEquipe():vEscala();aplicaIdentidade();document.getElementById('b1').className=S.tab==='escala'?'on':'sec';document.getElementById('b2').className=S.tab==='equipe'?'on':'sec'}
 function escuro(){return S.tema==='dark'||(!S.tema&&matchMedia('(prefers-color-scheme:dark)').matches)}
 function aplicaTema(){const r=document.documentElement;S.tema?r.setAttribute('data-t',S.tema):r.removeAttribute('data-t');document.getElementById('tm').textContent=escuro()?'☀️':'🌙'}
