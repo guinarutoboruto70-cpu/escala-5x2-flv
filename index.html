@@ -336,7 +336,7 @@ function vEntrada(){
   <div class="row" style="justify-content:center;margin-top:10px"><button onclick="backup(1)">📤 Compartilhar backup</button><button class="sec" onclick="backup(0)">⬇️ Baixar backup</button><button class="sec" onclick="g$('bk_file').click()">📥 Restaurar backup</button></div>
   <input type="file" id="bk_file" accept=".json,application/json" style="display:none" onchange="restaurar(this)"></div></div>`
 }
-function iniciaS(){if(S.mv!==1){S.mv=1;const r=mesSemanas(S.inicio.slice(0,7));if(r){S.inicio=r.inicio;S.semanas=r.semanas}}migrarLegado()}
+function iniciaS(){if(S.mv!==1){S.mv=1;const r=mesSemanas(S.inicio.slice(0,7));if(r){S.inicio=r.inicio;S.semanas=r.semanas}}if(!Number.isFinite(+S.semanas)||+S.semanas<4)S.semanas=4;migrarLegado()}
 function abrir(p){
   KEY=p==='gerente'?KEYG:KEY0;S=S0();SV=-2;
   try{Object.assign(S,JSON.parse(localStorage.getItem(KEY)||'{}'))}catch(e){}
