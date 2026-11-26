@@ -58,7 +58,7 @@ const br=s=>s.slice(8)+'/'+s.slice(5,7);
 const uid=()=>Math.random().toString(36).slice(2,9);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const ord=(a,b)=>(b.cargo==='Encarregado')-(a.cargo==='Encarregado')||a.nome.localeCompare(b.nome,'pt-BR');
-const domOff=(c,dom)=>((Math.round(diff(dom,c.pd)/7)%2)+2)%2===0; // domingos alternados a partir do 1º domingo de folga
+const domOff=(c,dom)=>((Math.round(diff(dom,c.pd)/7)%2)+2)%2===0; // DSR alternado independentemente da folga fixa
 const dias=()=>Array.from({length:7*S.semanas},(_,i)=>add(S.inicio,i));
 
 // ===== MOTOR DA ESCALA =====
@@ -73,7 +73,7 @@ const ultF=c=>[c.ult,c.ultd].filter(Boolean).sort().pop()||''; // a folga mais r
 const refDom=()=>add(START,6); // primeiro domingo da escala (ex.: 29/11)
 const domSel=c=>!c.pd?'':(((Math.round(diff(c.pd,refDom())/7)%2)+2)%2===0?'dsr':'trab');
 const domPd=v=>v==='dsr'?refDom():v==='trab'?add(refDom(),7):'';
-const domOpts=c=>[['','— Nenhum —'],['trab','Trabalha'],['dsr','DSR (folga)']].map(([v,t])=>`<option value="${v}"${domSel(c)===v?' selected':''}${v==='dsr'&&fd(c)!==0?' disabled':''}>${t}${v==='dsr'&&fd(c)!==0?' — exige folga fixa na segunda':''}</option>`).join('');
+const domOpts=c=>[['','— Nenhum —'],['trab','Trabalha'],['dsr','DSR (folga)']].map(([v,t])=>`<option value="${v}"${domSel(c)===v?' selected':''}>${t}</option>`).join('');
 const vis=()=>S.colabs.filter(c=>S.filtro==='Todos'||c.turno===S.filtro);
 const feriasFim=c=>c&&c.ferias&&c.ferias.inicio?(c.ferias.fim||add(c.ferias.inicio,29)):'';
 const emFeriasData=(c,d)=>!!(c&&c.ferias&&c.ferias.inicio&&d>=c.ferias.inicio&&d<=feriasFim(c));
@@ -91,7 +91,6 @@ function gerar(only,outra){
   if(dt(S.inicio).getDay()!==1){alert('O início precisa ser uma segunda-feira.');return}
   if(!S.colabs.length){alert('Cadastre ou importe os colaboradores.');return}
   if(!only){
-    const invalidDsr=S.colabs.find(c=>c.pd===refDom()&&fd(c)!==0);if(invalidDsr){alert('O DSR de '+invalidDsr.nome+' só pode ser usado quando a folga fixa é na segunda-feira.');return}
     for(const c of S.colabs){const o=confEnc(c);if(o){alert(msgEnc(c,o));return}}
     if(!S.colabs.some(c=>c.pd)){alert('Marque quem trabalha e quem fica de DSR no domingo '+br(refDom())+' (botão Domingo).');return}
     if(S.inicio>START&&!outra&&!S.colabs.some(c=>[1,2,3,4,5,6,7].some(i=>(S.grid[c.id]||{})[add(S.inicio,-i)]))&&!confirm('O mês anterior ainda não foi gerado. O app segue a escala anterior para calcular as folgas. Gerar mesmo assim?'))return;
@@ -118,7 +117,7 @@ function gerar(only,outra){
       for(let a=0;a<5;a++){if(emFerias(c,add(seg,a))||S.ajustesManuais?.[c.id]?.[add(seg,a)]==='F')continue;if(k===1)cand.push([a]);else for(let b=a+2;b<5;b++)if(!emFerias(c,add(seg,b))&&!S.ajustesManuais?.[c.id]?.[add(seg,b)])cand.push([a,b])}
       const ok=o=>{let p=last;for(const q of sun?[...o,6]:o){
         if(q-p-1>5)return false;
-        if(q-p<2&&!(fd(c)===0&&q===0&&p===-1))return false;
+        if(q-p<2&&!(q===0&&p===-1))return false;
         p=q}return true};
       const outros=cs.filter(x=>x.cargo==='Encarregado'&&x.id!==c.id); // encarregados nunca folgam no mesmo dia
       const base=cand.filter(o=>(fd(c)<0||o.includes(fd(c)))&&(c.cargo!=='Encarregado'||o.every(i=>!outros.some(x=>(S.grid[x.id]||{})[add(seg,i)]))));
@@ -153,7 +152,7 @@ function problemas(){
     const u=ultF(c),rc=u&&diff(S.inicio,u)>0&&diff(S.inicio,u)<=7;
     let run=rc?diff(S.inicio,u)-1:0,prev=!!(rc&&diff(S.inicio,u)===1);
     ds.forEach((d,i)=>{const off=!!g[d];
-      if(off){run=0;if(prev&&!(fd(c)===0&&i%7===0&&(g[add(d,-1)]==='D'||(i===0&&u===add(d,-1)))))out.push(c.nome+': folgas seguidas em '+br(add(d,-1))+'–'+br(d))}
+      if(off){run=0;if(prev&&!(i%7===0&&(g[add(d,-1)]==='D'||(i===0&&u===add(d,-1)))))out.push(c.nome+': folgas seguidas em '+br(add(d,-1))+'–'+br(d))}
       else{run++;if(run===6)out.push(c.nome+': 6 dias seguidos de trabalho até '+br(d))}
       prev=off});
     for(let w=0;w<S.semanas;w++){let n=0;for(let i=0;i<7;i++)if(g[add(S.inicio,7*w+i)])n++;
@@ -400,7 +399,7 @@ function sv(){
   const e=S.edit,v=i=>document.getElementById(i);
   const c={id:e.id||uid(),nome:v('f_nome').value.trim(),cargo:S.perfil==='gerente'?'Encarregado':v('f_cargo').value,turno:v('f_turno').value,setor:S.perfil==='gerente'?(v('f_setor').value.trim()):(e.setor||''),pd:domPd(v('f_dom').value),fd:v('f_fd').value===''?'':+v('f_fd').value,ult:e.ult||'',ultd:e.ultd||'',prov:false};
   if(!c.nome){alert('Informe o nome.');return}if(S.perfil==='gerente'&&!c.setor){alert('Informe o setor do encarregado.');return}
-  if(c.pd&&dt(c.pd).getDay()!==0){alert('O primeiro domingo de folga precisa cair num domingo.');return}if(c.pd===refDom()&&fd(c)!==0){alert('O DSR só pode ser usado quando a folga fixa é na segunda-feira.');return}
+  if(c.pd&&dt(c.pd).getDay()!==0){alert('O primeiro domingo de folga precisa cair num domingo.');return}
   {const o=confEnc(c);if(o){alert(msgEnc(c,o));return}}
   const i=S.colabs.findIndex(x=>x.id===c.id);i>=0?S.colabs[i]=c:S.colabs.push(c);save();go('equipe')}
 function del(id){if(confirm('Excluir colaborador?')){S.colabs=S.colabs.filter(c=>c.id!==id);delete S.grid[id];save();go('equipe')}}
@@ -440,7 +439,7 @@ function salvarFerias(id){const c=pes(id),ini=g$('v_ferias_inicio')?.value||'';i
 function limparFerias(id){const c=pes(id);if(!confirm('Remover as férias de '+c.nome+'?'))return;delete c.ferias;save();if(Object.keys(S.grid[id]||{}).length)gerar(id);fm();render()}
 function conc(id){const c=pes(id),v=domPd(g$('v_dom').value),cg=S.perfil==='gerente'?'Encarregado':g$('v_enc').checked?'Encarregado':'Colaborador';
   const o=confEnc({...c,pd:v,cargo:cg});if(o){alert(msgEnc(c,o));return}
-  const uv=g$('v_ult').value,dv=g$('v_ultd').value,fdv=g$('v_fd').value===''?'':+g$('v_fd').value;if(v===refDom()&&fdv!==0){alert('O DSR só pode ser usado quando a folga fixa é na segunda-feira.');return}const er=valUlt(c.nome,uv,dv,v);if(er){alert(er);return}c.ult=uv;c.ultd=dv;const fv=g$('v_fd').value;c.fd=fv===''?'':+fv;delete c.fixa;c.pd=v;c.cargo=cg;c.prov=false;if(!v)delete S.grid[id];save();
+  const uv=g$('v_ult').value,dv=g$('v_ultd').value,er=valUlt(c.nome,uv,dv,v);if(er){alert(er);return}c.ult=uv;c.ultd=dv;const fv=g$('v_fd').value;c.fd=fv===''?'':+fv;delete c.fixa;c.pd=v;c.cargo=cg;c.prov=false;if(!v)delete S.grid[id];save();
   if(Object.keys(S.grid[id]||{}).length)gerar(id); // refaz só essa pessoa
   if(!c.pd){fm();render();return}
   doms(id)}
