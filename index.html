@@ -2,7 +2,7 @@
 <html lang="pt-BR"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#0D7EA4">
-<meta name="app-versao" content="1.5">
+<meta name="app-versao" content="1.6">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon-192.png?v=2">
 <link rel="apple-touch-icon" href="icon-192.png?v=2">
@@ -45,7 +45,7 @@ let ENTROU=false,SV=-2,INV=false; // SV: semana em exibição (-1 = ciclo todo) 
 // Peso de cada dia (Seg..Sex): quanto maior, menos folgas o app coloca nesse dia.
 const W=[3,1,4,1,1]; // Seg 3, Ter 1, Qua 4 (quarta verde), Qui 1, Sex 1
 const START='2026-11-23'; // início do regime 5x2 (1ª segunda-feira)
-const KEY0='escala5x2_flv_v1',KEYG='escala5x2_flv_v1_gerente';let KEY=KEY0;const OLD='escala_domingo_flv_v1',CLOUD='https://escala-atacadao--escalaflv.replit.app/api/state';
+const KEY0='escala5x2_flv_v1',KEYG='escala5x2_flv_v1_gerente';const KEYA='escala5x2_abertura',KEYF='escala5x2_fechamento';const kp=p=>p==='gerente'?KEYG:p==='abertura'?KEYA:p==='fechamento'?KEYF:KEY0;let KEY=KEY0;const OLD='escala_domingo_flv_v1',CLOUD='https://escala-atacadao--escalaflv.replit.app/api/state';
 const NOMES=['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];
 const S0=()=>({colabs:[],grid:{},inicio:'2026-11-23',semanas:5,inv:'',tema:'',cap:[3,3,3,4,4],alvoA:[0,3,3,0,0],capv:2,seed:0,edita:false,prev:'',filtro:'Todos',edit:null,tab:'escala',historico:[],ajustesManuais:{},imprimirFerias:false,perfil:'',setor:'',perfilTemp:''});let S=S0();
 if(S.capv!==2){S.cap=[3,3,3,4,4];S.capv=2} // novos limites: 3 por dia, Qui/Sex até 4
@@ -80,7 +80,7 @@ const emFeriasData=(c,d)=>!!(c&&c.ferias&&c.ferias.inicio&&d>=c.ferias.inicio&&d
 const emFerias=(c,d)=>emFeriasData(c,d);
 const feriasNoPeriodo=(c,ds)=>ds.some(d=>emFerias(c,d));
 const statusFerias=c=>{if(!c||!c.ferias||!c.ferias.inicio)return '';const hoje=iso(new Date()),fim=feriasFim(c);return hoje<c.ferias.inicio?'Programadas':hoje<=fim?'Em andamento':'Encerradas'};
-const retornoFerias=c=>feriasFim(c)?add(feriasFim(c),1):'';
+const retornoFerias=c=>c&&c.ferias&&c.ferias.retorno?c.ferias.retorno:(feriasFim(c)?add(feriasFim(c),1):'');
 const primeiroTrabalho=(c)=>{let d=retornoFerias(c);if(!d)return '';for(let i=0;i<90;i++,d=add(d,1)){if(!emFerias(c,d)&&((S.grid[c.id]||{})[d]==='T'||(!(S.grid[c.id]||{})[d]&&dt(d).getDay()!==0&&dt(d).getDay()!==6)))return d}return retornoFerias(c)};
 const marca=(c,d)=>{const g=S.grid[c.id]||{};return emFerias(c,d)?'V':(Object.keys(g).length?(g[d]||'T'):(g[d]||''))};
 const nomeColab=c=>c.nome+(S.perfil==='gerente'&&c.setor?' · '+c.setor:'')+(feriasNoPeriodo(c,dias())?' · FÉRIAS':'');
@@ -114,7 +114,7 @@ function gerar(only,outra){
       const uf=ultF(c);if(last===null&&uf){const d=diff(uf,seg);if(d<0&&d>=-14)last=d} // última folga antes do início (escala 6x1 anterior)
       if(last===null)last=domOff(c,add(seg,-1))?-1:-3;
       const cand=[];
-      for(let a=0;a<5;a++){if(emFerias(c,add(seg,a))||S.ajustesManuais?.[c.id]?.[add(seg,a)]==='F')continue;if(k===1)cand.push([a]);else for(let b=a+2;b<5;b++)if(!emFerias(c,add(seg,b))&&!S.ajustesManuais?.[c.id]?.[add(seg,b)])cand.push([a,b])}
+      for(let a=0;a<5;a++){if(emFerias(c,add(seg,a))||S.ajustesManuais?.[c.id]?.[add(seg,a)]==='F'||S.ajustesManuais?.[c.id]?.[add(seg,a)]==='')continue;if(k===1)cand.push([a]);else for(let b=a+2;b<5;b++)if(!emFerias(c,add(seg,b))&&S.ajustesManuais?.[c.id]?.[add(seg,b)]===undefined)cand.push([a,b])}
       const ok=o=>{let p=last;for(const q of sun?[...o,6]:o){
         if(q-p-1>5)return false;
         if(q-p<2&&!(q===0&&p===-1))return false;
@@ -160,6 +160,8 @@ function problemas(){
   });
   ['Abertura','Fechamento'].forEach(t=>{const cs=S.colabs.filter(c=>c.turno===t);ds.forEach(d=>{const wd=(dt(d).getDay()+6)%7;
     if(wd<5){const n=cs.filter(c=>(S.grid[c.id]||{})[d]==='F').length;if(n>S.cap[wd])out.push(t+': '+n+' folgas na '+NOMES[wd]+' '+br(d)+' (máx. '+S.cap[wd]+')')}})});
+  if(S.perfil==='abertura'){const nf=S.colabs.filter(c=>fd(c)===0).length;if(S.colabs.length&&nf!==2)out.push('Segunda-feira: '+nf+' colaborador(es) com folga fixa (a regra da abertura é exatamente 2).');
+    ds.forEach(d=>{if(dt(d).getDay()===1&&d!==START){const n=S.colabs.filter(c=>(S.grid[c.id]||{})[d]==='F').length;if(n>2)out.push('Segunda '+br(d)+': '+n+' folgas (só a primeira semana pode ter uma flexível a mais).')}})}
   const es=S.colabs.filter(c=>c.cargo==='Encarregado');
   if(es.length>1)ds.forEach(d=>{if(es.filter(c=>(S.grid[c.id]||{})[d]).length>1)out.push('Encarregados folgando no mesmo dia: '+br(d))});
   return [...(S.avisos||[]),...out];
@@ -170,7 +172,7 @@ function limpar(){if(confirm('Apagar a escala gerada?')){S.grid={};S.avisos=[];s
 
 // ===== TELAS =====
 function go(t){fb();S.tab=t;S.edit=null;render()}
-const chips=()=>`<div class="row no">${['Todos','Abertura','Fechamento'].map(t=>`<button class="${S.filtro===t?'':'sec'}" onclick="S.filtro='${t}';render()">${t}</button>`).join('')}</div>`;
+const chips=()=>(S.perfil==='abertura'||S.perfil==='fechamento')?'':`<div class="row no">${['Todos','Abertura','Fechamento'].map(t=>`<button class="${S.filtro===t?'':'sec'}" onclick="S.filtro='${t}';render()">${t}</button>`).join('')}</div>`;
 function aviso(){const f=S.colabs.filter(c=>!c.pd),su=Object.keys(S.grid).length?[]:S.colabs.filter(c=>!ultF(c));
   const dq=['Abertura','Fechamento'].map(t=>{const cs=S.colabs.filter(c=>c.turno===t&&c.pd),a=cs.filter(c=>domSel(c)==='dsr').length,b=cs.length-a;
     return Math.abs(a-b)>1?t+': '+a+' de DSR e '+b+' trabalham em '+br(refDom()):''}).filter(Boolean);
@@ -183,7 +185,7 @@ function vInicio(){
 function escolherPerfil(p){S.perfilTemp=p;render()}
 function confirmarInicio(){const n=(g$('inicio_nome')?.value||'').trim();if(!n){alert('Informe o nome do setor ou ambiente.');return}S.perfil=S.perfilTemp;S.setor=n;S.perfilTemp='';S.tab='escala';ENTROU=true;iniciaS();save();aplicaTema();render()}
 function editarAmbiente(){const n=prompt(S.perfil==='gerente'?'Nome do ambiente gerencial:':'Nome do setor:',S.setor||'');if(n&&n.trim()){S.setor=n.trim();save();render()}}
-function aplicaIdentidade(){const t=g$('tituloApp'),sub=g$('subtituloApp');if(!t)return;t.textContent=S.perfil?('🥬 Escala 5x2 — '+(S.setor||'Setor')):'🥬 Escala 5x2';if(sub)sub.textContent=S.perfil==='gerente'?'Escala gerencial de encarregados':'Folgas de domingo e da semana'}
+function aplicaIdentidade(){const t=g$('tituloApp'),sub=g$('subtituloApp');if(!t)return;t.textContent=S.perfil?('🥬 Escala 5x2 — '+(S.perfil==='abertura'?'Abertura':S.perfil==='fechamento'?'Fechamento':(S.setor||'Setor'))):'🥬 Escala 5x2';if(sub)sub.textContent=S.perfil==='gerente'?'Escala gerencial de encarregados':'Folgas de domingo e da semana'}
 const TUTK='escala5x2_tut_v1';
 const TUT=[
 ['📲','Instalar no celular','<b>Android (Chrome):</b> abra o link do app, toque nos três pontinhos (⋮) e escolha <b>Instalar app</b> ou <b>Adicionar à tela inicial</b>.<br><br><b>iPhone (Safari):</b> toque em <b>Compartilhar</b> (quadrado com seta) e depois em <b>Adicionar à Tela de Início</b>.<br><br>O ícone 🥬 aparece na tela do celular, como um app comum.'],
@@ -216,7 +218,7 @@ let IV={p:'setor',data:'',turno:'AF',na:2,nf:2,enc:true,ci:-1,msg:'',trocaIdx:-1
 const invAll=()=>{try{return JSON.parse(localStorage.getItem(INVK)||'{}')||{}}catch(e){return{}}};
 const invD=()=>{const a=invAll();return a[IV.p]||{cfg:null,combos:[]}};
 const invSave=d=>{const a=invAll();a[IV.p]=d;try{localStorage.setItem(INVK,JSON.stringify(a))}catch(e){}};
-const invPerfil=p=>{try{return JSON.parse(localStorage.getItem(p==='gerente'?KEYG:KEY0)||'null')}catch(e){return null}}; // somente leitura
+const invPerfil=p=>{try{return JSON.parse(localStorage.getItem(kp(p))||'null')}catch(e){return null}}; // somente leitura
 const NSEM=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
 const fdata=d=>NSEM[dt(d).getDay()]+' '+br(d)+'/'+d.slice(0,4);
 // Núcleo da seleção (função pura: recebe dados, não toca no app). seed 0 = melhor combinação; seed>0 = variações válidas.
@@ -302,14 +304,14 @@ function invImprimir(){const c=invAtual();if(!c)return;const old=g$('printArea')
   h+='<div class="plegend">Total: '+c.part.length+' participante(s) · Desenvolvido por William Jesus</div></section>';
   a.innerHTML=h;document.body.appendChild(a);document.body.classList.add('imprimindo');
   const fim=()=>{document.body.classList.remove('imprimindo');a.remove();window.removeEventListener('afterprint',fim)};window.addEventListener('afterprint',fim);setTimeout(()=>window.print(),80)}
-function abrirInv(){INV=true;IV.msg='';IV.ci=-1;const ps=['setor','gerente'].filter(p=>invPerfil(p));IV.p=ps.includes(IV.p)?IV.p:(ps[0]||'setor');
+function abrirInv(){INV=true;IV.msg='';IV.ci=-1;const ps=['abertura','fechamento','gerente'].filter(p=>invPerfil(p));IV.p=ps.includes(IV.p)?IV.p:(ps[0]||'setor');
   const P=invPerfil(IV.p);if(!IV.data&&P&&P.inicio)IV.data=P.inicio;const d=invD();if(d.cfg){IV.turno=d.cfg.turno;IV.na=d.cfg.na;IV.nf=d.cfg.nf;IV.enc=d.cfg.enc;IV.data=d.cfg.data}
   if(d.combos.length)IV.ci=0;render()}
 function sairInv(){INV=false;IV.msg='';render()}
 function rInv(){
   const t=g$('tituloApp'),sb=g$('subtituloApp'),nav=document.querySelector('nav'),sr=g$('sr');if(t)t.textContent='📦 Escala de Inventário';if(sb)sb.textContent='Equipe do inventário por setor';if(nav)nav.style.display='none';if(sr)sr.style.display='none';
-  const ps=['setor','gerente'].filter(p=>invPerfil(p));if(!ps.length){g$('app').innerHTML='<div class="card">Nenhum perfil tem equipe cadastrada ainda. Entre como <b>Encarregado de setor</b>, cadastre a equipe e gere a escala 5x2.</div><div class="row"><button class="sec" onclick="sairInv()">← Voltar à tela principal</button></div>';return}
-  const d=invD(),c=invAtual(),nomeP=p=>{const x=invPerfil(p);return(p==='gerente'?'Gerente':'Encarregado de setor')+(x&&x.setor?' — '+x.setor:'')};
+  const ps=['abertura','fechamento','gerente'].filter(p=>invPerfil(p));if(!ps.length){g$('app').innerHTML='<div class="card">Nenhum perfil tem equipe cadastrada ainda. Entre como <b>Encarregado de setor</b>, cadastre a equipe e gere a escala 5x2.</div><div class="row"><button class="sec" onclick="sairInv()">← Voltar à tela principal</button></div>';return}
+  const d=invD(),c=invAtual(),nomeP=p=>{const x=invPerfil(p);return(p==='gerente'?'Gerente':p==='abertura'?'Encarregado da abertura':'Encarregado do fechamento')+(x&&x.setor?' — '+x.setor:'')};
   let h='<div class="row no"><button class="sec" onclick="sairInv()">← Voltar à tela principal</button></div><div class="card no">'
    +'<label>Equipe de qual perfil/setor</label><select id="iv_p" onchange="invLerForm();IV.ci=-1;abrirInv()">'+ps.map(p=>`<option value="${p}"${p===IV.p?' selected':''}>${esc(nomeP(p))}</option>`).join('')+'</select>'
    +'<div class="row"><div style="flex:1"><label>Data do inventário</label><input type="date" id="iv_d" value="'+IV.data+'"></div><div style="flex:1"><label>Turno</label><select id="iv_t" onchange="invLerForm();rInv()">'+[['A','Abertura'],['F','Fechamento'],['AF','Abertura e fechamento']].map(([v,n])=>`<option value="${v}"${IV.turno===v?' selected':''}>${n}</option>`).join('')+'</select></div></div>'
@@ -325,41 +327,52 @@ function rInv(){
   if(d.combos.length)h+='<h4 class="no">Combinações geradas</h4><div class="no">'+d.combos.map((x,i)=>`<div class="li" style="${i===IV.ci?'outline:2px solid var(--pri)':''}"><span onclick="IV.ci=${i};rInv()" style="flex:1;cursor:pointer">${fdata(x.cfg.data)} · ${x.part.length} pessoa(s)${x.salva?' ★':''}</span><button class="sec" style="padding:4px 10px" onclick="invApagar(${i})">🗑️</button></div>`).join('')+'</div>';
   g$('app').innerHTML=h}
 // ===== FIM DO MÓDULO DE INVENTÁRIO =====
-function infoPerfil(p){let d=null;try{d=JSON.parse(localStorage.getItem(p==='gerente'?KEYG:KEY0)||'null')}catch(e){}
+function migraTurnos(){try{
+  if(localStorage.getItem(KEYA)||localStorage.getItem(KEYF))return;
+  const raw=localStorage.getItem(KEY0);if(!raw)return;
+  localStorage.setItem(KEY0+'_backup_v15',raw); // cópia de segurança; os dados originais não são apagados
+  const d=JSON.parse(raw);
+  [[KEYA,'Abertura','abertura'],[KEYF,'Fechamento','fechamento']].forEach(([k,t,p])=>{
+    const cs=(d.colabs||[]).filter(c=>c.turno===t);if(!cs.length)return;const ids=new Set(cs.map(c=>c.id));
+    const fl=o=>{const r={};Object.keys(o||{}).forEach(id=>{if(ids.has(id))r[id]=o[id]});return r};
+    const hist=(d.historico||[]).map(h=>({...h,colabs:(h.colabs||[]).filter(c=>c.turno===t),grid:fl(h.grid)}));
+    localStorage.setItem(k,JSON.stringify({...d,colabs:cs,grid:fl(d.grid),ajustesManuais:fl(d.ajustesManuais),historico:hist,perfil:p,setor:'FLV'}))});
+}catch(e){}}
+function infoPerfil(p){let d=null;try{d=JSON.parse(localStorage.getItem(kp(p))||'null')}catch(e){}
   return d&&((d.colabs||[]).length||Object.keys(d.grid||{}).length||d.perfil)?d:null}
 function vEntrada(){
   const bt=(p,ic,tt,sub)=>{const d=infoPerfil(p);return `<button class="start-choice" onclick="abrir('${p}')"><span>${ic}</span><b>${tt}</b><small>${d?'Entrar'+(d.setor?' — '+esc(d.setor):'')+' · '+(d.colabs||[]).length+' pessoa(s)':'Primeiro acesso: '+sub}</small></button>`};
   return `<div class="start"><div class="start-box"><div class="start-logo">🥬</div><h2>Escala 5x2</h2><p>Escolha como vai usar o app. Cada perfil tem seus próprios dados, guardados neste aparelho.</p>
-  <div class="start-choices">${bt('setor','👤','Encarregado de setor','cadastre sua equipe')}${bt('gerente','👥','Gerente','cadastre os encarregados')}<button class="start-choice" onclick="abrirInv()"><span>📦</span><b>Escala de inventário</b><small>monte a equipe do inventário</small></button></div>
+  <div class="start-choices">${bt('abertura','🌅','Encarregado da abertura','cadastre sua equipe')}${bt('fechamento','🌙','Encarregado do fechamento','cadastre sua equipe')}${bt('gerente','👥','Gerente','cadastre os encarregados')}<button class="start-choice" onclick="abrirInv()"><span>📦</span><b>Escala de inventário</b><small>monte a equipe do inventário</small></button></div>
   ${lembreteBk()}<div class="row" style="justify-content:center;margin-top:14px"><button class="sec" onclick="tut(0)">📖 Como instalar e usar</button></div>
-  <h4 style="margin-top:22px">💾 Backup dos dados</h4><small style="display:block">Salva os dois perfis (equipe, escala e histórico) em um arquivo. Faça de vez em quando e antes de mudar o app.</small>
-  <div class="row" style="justify-content:center;margin-top:10px"><button onclick="backup(1)">📤 Compartilhar backup</button><button class="sec" onclick="backup(0)">⬇️ Baixar backup</button><button class="sec" onclick="g$('bk_file').click()">📥 Restaurar backup</button></div>
-  <input type="file" id="bk_file" accept=".json,application/json" style="display:none" onchange="restaurar(this)"></div></div>`
+  <h4 style="margin-top:22px">💾 Backup dos dados</h4><small style="display:block">Cada turno tem o seu backup. Entre no seu perfil e use a aba Equipe → Backup / Restaurar.</small></div></div>`
 }
 function iniciaS(){if(S.mv!==1){S.mv=1;const r=mesSemanas(S.inicio.slice(0,7));if(r){S.inicio=r.inicio;S.semanas=r.semanas}}if(!Number.isFinite(+S.semanas)||+S.semanas<4)S.semanas=4;migrarLegado()}
 function abrir(p){
-  KEY=p==='gerente'?KEYG:KEY0;S=S0();SV=-2;
+  KEY=kp(p);S=S0();SV=-2;
   try{Object.assign(S,JSON.parse(localStorage.getItem(KEY)||'{}'))}catch(e){}
   if(S.capv!==2){S.cap=[3,3,3,4,4];S.capv=2}
-  if(S.perfil||S.colabs.length||Object.keys(S.grid||{}).length){ // já usado neste perfil: entra direto
+  if(p!=='gerente')S.filtro=p==='abertura'?'Abertura':'Fechamento';
+  if(p!=='gerente'||S.perfil||S.colabs.length||Object.keys(S.grid||{}).length){ // já usado neste perfil: entra direto
     S.perfil=p;S.setor=S.setor||(p==='gerente'?'Gerencial':'FLV');S.tab='escala';ENTROU=true;iniciaS();save();aplicaTema();render();return}
   S.perfilTemp=p;render()} // primeiro acesso: pede o nome do setor/ambiente
 function sair(){save();ENTROU=false;S.perfilTemp='';render()}
 function backup(share){
-  if(ENTROU)save();try{localStorage.setItem('escala5x2_bk',Date.now())}catch(e){}const dados={};
-  for(const [k,key] of [['setor',KEY0],['gerente',KEYG]]){try{const d=JSON.parse(localStorage.getItem(key)||'null');if(d)dados[k]=d}catch(e){}}
-  try{const iv=JSON.parse(localStorage.getItem(INVK)||'null');if(iv)dados.inv=iv}catch(e){}
-  const n=new Date(),p=x=>String(x).padStart(2,'0'),o={app:'escala5x2-flv',versao:2,criado:n.toISOString(),dados};
-  entrega(new Blob([JSON.stringify(o)],{type:'application/json'}),'backup-escala-5x2-'+n.getFullYear()+p(n.getMonth()+1)+p(n.getDate())+'.json',share)}
+  if(!ENTROU){alert('Entre no seu perfil (abertura, fechamento ou gerente) para fazer o backup dele.');return}
+  save();try{localStorage.setItem('escala5x2_bk',Date.now())}catch(e){}
+  const dados=JSON.parse(localStorage.getItem(KEY)||'null'),inv=invAll()[S.perfil];
+  const n=new Date(),p=x=>String(x).padStart(2,'0'),o={app:'escala5x2-flv',versao:3,turno:S.perfil,criado:n.toISOString(),dados,inv:inv||null};
+  alert('Backup '+NOMEBK[S.perfil]+'.');
+  entrega(new Blob([JSON.stringify(o)],{type:'application/json'}),'backup-escala-5x2-'+S.perfil+'-'+n.getFullYear()+p(n.getMonth()+1)+p(n.getDate())+'.json',share)}
+const NOMEBK={abertura:'da ABERTURA',fechamento:'do FECHAMENTO',gerente:'do GERENTE'};
 function restaurar(inp){
   const f=inp.files&&inp.files[0];if(!f)return;const r=new FileReader();
-  r.onload=()=>{try{const o=JSON.parse(r.result);if(!o||o.app!=='escala5x2-flv'||!o.dados)throw 0;
-    let set=null,ger=null;if(o.versao===2){set=o.dados.setor||null;ger=o.dados.gerente||null}else set=o.dados; // versão 1 = só o perfil de setor
-    if((!set&&!ger)||(set&&!Array.isArray(set.colabs))||(ger&&!Array.isArray(ger.colabs)))throw 0;
-    const q=x=>x?x.colabs.length+' pessoa(s)':'sem dados';
-    if(!confirm('Restaurar o backup de '+(o.criado||'').slice(0,10)+'?\nEncarregado de setor: '+q(set)+'\nGerente: '+q(ger)+'\nOs dados atuais desses perfis neste aparelho serão substituídos.'))return;
-    try{if(set)localStorage.setItem(KEY0+'_antes',localStorage.getItem(KEY0)||'');if(ger)localStorage.setItem(KEYG+'_antes',localStorage.getItem(KEYG)||'')}catch(e){}
-    if(o.dados.inv&&typeof o.dados.inv==='object')localStorage.setItem(INVK,JSON.stringify(o.dados.inv));if(set)localStorage.setItem(KEY0,JSON.stringify(set));if(ger)localStorage.setItem(KEYG,JSON.stringify(ger));location.reload()}catch(e){alert('Arquivo de backup inválido. Use um arquivo gerado pelo botão Backup deste app.')}};
+  r.onload=()=>{try{const o=JSON.parse(r.result);if(!o||o.app!=='escala5x2-flv'||o.versao!==3||!o.dados||!Array.isArray(o.dados.colabs))throw 0;
+    if(o.turno!==S.perfil){alert('Backup NÃO restaurado: este arquivo é '+NOMEBK[o.turno]+' e você está no perfil '+NOMEBK[S.perfil]+'.');return}
+    if(!confirm('Restaurar o backup '+NOMEBK[o.turno]+' de '+(o.criado||'').slice(0,10)+' ('+o.dados.colabs.length+' pessoa(s))?\nOs dados atuais deste perfil neste aparelho serão substituídos.'))return;
+    try{localStorage.setItem(KEY+'_antes',localStorage.getItem(KEY)||'')}catch(e){}
+    if(o.inv){const a=invAll();a[S.perfil]=o.inv;localStorage.setItem(INVK,JSON.stringify(a))}
+    localStorage.setItem(KEY,JSON.stringify(o.dados));location.reload()}catch(e){alert('Arquivo inválido. Use um backup gerado por este app na versão atual (backups antigos de todos os perfis juntos não são aceitos).')}};
   r.readAsText(f);inp.value=''}
 function vEscala(){
   const ds0=dias(),p=problemas();if(SV===-2){const h=diff(iso(new Date()),S.inicio);SV=h>=0&&h<7*S.semanas?Math.floor(h/7):0}const ds=SV<0?ds0:ds0.slice(SV*7,SV*7+7);
@@ -388,11 +401,11 @@ function vEquipe(){
   const form=e?`<div class="card"><b>${e.id?'Editar':ger?'Novo encarregado':'Novo colaborador'}</b>
   <label>Nome</label><input id="f_nome" value="${esc(e.nome||'')}">
   ${ger?`<input type="hidden" id="f_cargo" value="Encarregado"><label>Setor</label><input id="f_setor" placeholder="Ex.: FLV, Açougue, Padaria" value="${esc(e.setor||'')}">`:`<label>Cargo</label><select id="f_cargo">${sel(e.cargo||'Colaborador',['Colaborador','Encarregado'])}</select>`}
-  <label>Turno</label><select id="f_turno">${sel(e.turno||'Abertura',['Abertura','Fechamento'])}</select>
+  ${S.perfil==='abertura'||S.perfil==='fechamento'?'<input type="hidden" id="f_turno" value="'+(S.perfil==='abertura'?'Abertura':'Fechamento')+'">':`<label>Turno</label><select id="f_turno">${sel(e.turno||'Abertura',['Abertura','Fechamento'])}</select>`}
   <label>Domingo ${br(refDom())}</label><select id="f_dom">${domOpts(e)}</select>
   <label>Folga fixa na semana</label><select id="f_fd">${fdOpts(e)}</select>
   <div class="row"><button onclick="sv()">Salvar</button><button class="sec" onclick="go('equipe')">Cancelar</button>${e.id?`<button class="sec" onclick="del('${e.id}')">Excluir</button>`:''}</div></div>`:'';
-  return `<div class="card"><b>${ger?'👥 Cadastro dos encarregados de todos os setores':'👥 Equipe do setor '+esc(S.setor||'')}</b><br><small>${ger?'Cadastre cada encarregado com o respectivo setor para gerar a escala gerencial.':'Cadastre os colaboradores deste setor.'}</small></div><div class="row no"><button onclick="ed()">➕ ${ger?'Novo encarregado':'Novo'}</button><button class="sec" onclick="editarAmbiente()">⚙️ ${ger?'Editar ambiente':'Editar setor'}</button>${!ger?'<button class="sec" onclick="importar()">⬇️ Importar do app antigo</button>':''}<button class="sec" onclick="shareApp()">🔗 Compartilhar app</button><button class="sec" onclick="backup(0)">💾 Backup</button></div>${chips()}${form}${list||'<div class="card">Nenhum colaborador. Use o botão acima para cadastrar.</div>'}`;
+  return `<div class="card"><b>${ger?'👥 Cadastro dos encarregados de todos os setores':'👥 Equipe do setor '+esc(S.setor||'')}</b><br><small>${ger?'Cadastre cada encarregado com o respectivo setor para gerar a escala gerencial.':'Cadastre os colaboradores deste setor.'}</small></div><div class="row no"><button onclick="ed()">➕ ${ger?'Novo encarregado':'Novo'}</button><button class="sec" onclick="editarAmbiente()">⚙️ ${ger?'Editar ambiente':'Editar setor'}</button>${!ger?'<button class="sec" onclick="importar()">⬇️ Importar do app antigo</button>':''}<button class="sec" onclick="shareApp()">🔗 Compartilhar app</button><button class="sec" onclick="backup(0)">💾 Backup</button><button class="sec" onclick="g$('bk_file').click()">📥 Restaurar</button><input type="file" id="bk_file" accept=".json,application/json" style="display:none" onchange="restaurar(this)"></div>${chips()}${form}${list||'<div class="card">Nenhum colaborador. Use o botão acima para cadastrar.</div>'}`;
 }
 function ed(id){S.edit=id?{...S.colabs.find(c=>c.id===id)}:{};render()}
 function sv(){
@@ -411,7 +424,7 @@ async function importar(){
   if(!l.length){alert('Não encontrei colaboradores no app antigo. Cadastre manualmente.');return}
   const nz=t=>String(t).normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
   const ja=new Set(S.colabs.map(c=>nz(c.nome+'|'+c.turno)));let novos=0;
-  l.forEach(o=>{const t=o.turno==='Fechamento'?'Fechamento':'Abertura';if(ja.has(nz(o.nome+'|'+t)))return;
+  l.forEach(o=>{const t=o.turno==='Fechamento'?'Fechamento':'Abertura';if((S.perfil==='abertura'&&t!=='Abertura')||(S.perfil==='fechamento'&&t!=='Fechamento'))return;if(ja.has(nz(o.nome+'|'+t)))return;
     S.colabs.push({id:uid(),nome:o.nome,cargo:o.cargo==='Encarregado'?'Encarregado':'Colaborador',turno:t,fd:/alan lima|josenilde/i.test(o.nome)?0:'',pd:'',ult:'',ultd:''});novos++});
   save();go('equipe');
   alert(novos+' colaborador(es) adicionados; '+(l.length-novos)+' já estavam cadastrados. Ninguém foi apagado nem alterado.')}
@@ -428,14 +441,19 @@ function ver(id){const c=pes(id);
     <label style="margin-top:12px">Domingo ${br(refDom())}</label><select id="v_dom">${domOpts(c)}</select><small>Define o primeiro domingo de trabalho ou DSR; os próximos domingos alternam.</small>
     <label style="margin-top:12px">Folga fixa na semana</label><select id="v_fd">${fdOpts(c)}</select><small>Use somente se a pessoa sempre folga no mesmo dia.</small>
   </div>
-  <div class="card" style="margin-top:10px;background:${c.ferias&&c.ferias.inicio?'#fee2e2':'var(--card)'}"><h4 style="margin-top:0">🏖️ Férias</h4><small>Informe o início. O aplicativo calcula 30 dias corridos e o retorno previsto.</small><label style="margin-top:8px">Início das férias</label><input type="date" id="v_ferias_inicio" value="${c.ferias&&c.ferias.inicio||''}" onchange="atualizaFeriasFim()"><label style="margin-top:8px">Último dia de férias</label><input type="date" id="v_ferias_fim" value="${feriasFim(c)||''}" readonly><small>${c.ferias&&c.ferias.inicio?'Retorno previsto: '+br(retornoFerias(c))+' · Situação: '+statusFerias(c):'Sem férias cadastradas.'}</small><div class="row"><button onclick="salvarFerias('${id}')">💾 Salvar férias</button>${c.ferias&&c.ferias.inicio?`<button class="sec" onclick="limparFerias('${id}')">Remover férias</button>`:''}</div></div>
+  <div class="card" style="margin-top:10px;background:${c.ferias&&c.ferias.inicio?'#fee2e2':'var(--card)'}"><h4 style="margin-top:0">🏖️ Férias</h4><small>Informe o início: o app sugere 30 dias corridos e o retorno. Você pode corrigir o último dia e o retorno.</small><label style="margin-top:8px">Início das férias</label><input type="date" id="v_ferias_inicio" value="${c.ferias&&c.ferias.inicio||''}" onchange="atualizaFeriasFim()"><label style="margin-top:8px">Último dia de férias</label><input type="date" id="v_ferias_fim" value="${feriasFim(c)||''}" onchange="atualizaRet()"><label style="margin-top:8px">Retorno ao trabalho</label><input type="date" id="v_ferias_ret" value="${retornoFerias(c)||''}"><small>${c.ferias&&c.ferias.inicio?'Retorno previsto: '+br(retornoFerias(c))+' · Situação: '+statusFerias(c):'Sem férias cadastradas.'}</small><div class="row"><button onclick="salvarFerias('${id}')">💾 Salvar férias</button>${c.ferias&&c.ferias.inicio?`<button class="sec" onclick="limparFerias('${id}')">Remover férias</button>`:''}</div></div>
   <details class="card" style="margin-top:10px"><summary style="cursor:pointer;font-weight:700;color:var(--pri)">🗓️ Dados anteriores ao início da escala</summary><small style="display:block;margin:8px 0">Esses dados ajudam a evitar mais de cinco dias seguidos de trabalho nas primeiras semanas e a manter o intervalo entre DSRs.</small>
     <label>Última folga da semana antes de ${br(START)}</label><input type="date" id="v_ult" value="${c.ult||''}">
     <label style="margin-top:10px">Último DSR antes de ${br(START)}</label><input type="date" id="v_ultd" value="${c.ultd||''}">
   </details>
   <div class="row" style="margin-top:14px"><button onclick="conc('${id}')">✔ Concluir</button><button class="sec" onclick="sem('${id}')">📅 Folgas da semana</button><button class="sec" onclick="fm();ed('${id}')">✏️ Editar cadastro</button></div>`)}
-function atualizaFeriasFim(){const ini=g$('v_ferias_inicio')?.value||'',f=g$('v_ferias_fim');if(f)f.value=ini?add(ini,29):''}
-function salvarFerias(id){const c=pes(id),ini=g$('v_ferias_inicio')?.value||'';if(!ini){delete c.ferias;save();fm();render();return}c.ferias={inicio:ini,fim:add(ini,29),retorno:add(ini,30),atualizado:Date.now()};save();if(Object.keys(S.grid[id]||{}).length)gerar(id);fm();render();alert('Férias salvas. Último dia: '+br(c.ferias.fim)+' · Retorno previsto: '+br(c.ferias.retorno)+'.')}
+function atualizaFeriasFim(){const ini=g$('v_ferias_inicio')?.value||'',f=g$('v_ferias_fim'),r=g$('v_ferias_ret');if(f)f.value=ini?add(ini,29):'';if(r)r.value=ini?add(ini,30):''}
+function atualizaRet(){const f=g$('v_ferias_fim')?.value||'',r=g$('v_ferias_ret');if(r)r.value=f?add(f,1):''}
+function salvarFerias(id){const c=pes(id),ini=g$('v_ferias_inicio')?.value||'';if(!ini){delete c.ferias;save();fm();render();return}
+  const fim=g$('v_ferias_fim')?.value||add(ini,29),ret=g$('v_ferias_ret')?.value||add(fim,1);
+  if(fim<ini){alert('O último dia de férias não pode ser antes do início.');return}
+  if(ret<=fim){alert('O retorno precisa ser depois do último dia de férias.');return}
+  c.ferias={inicio:ini,fim,retorno:ret,atualizado:Date.now()};save();if(Object.keys(S.grid[id]||{}).length)gerar(id);fm();render();alert('Férias salvas. Último dia: '+br(fim)+' · Retorno: '+br(ret)+'.')}
 function limparFerias(id){const c=pes(id);if(!confirm('Remover as férias de '+c.nome+'?'))return;delete c.ferias;save();if(Object.keys(S.grid[id]||{}).length)gerar(id);fm();render()}
 function conc(id){const c=pes(id),v=domPd(g$('v_dom').value),cg=S.perfil==='gerente'?'Encarregado':g$('v_enc').checked?'Encarregado':'Colaborador';
   const o=confEnc({...c,pd:v,cargo:cg});if(o){alert(msgEnc(c,o));return}
@@ -553,7 +571,7 @@ function entrega(blob,name,share){
   if(share)alert('Seu aparelho não permite compartilhar o arquivo direto. Ele foi baixado: é só anexar no WhatsApp.')}
 function xls(t,share){const ds=dias(),cs=S.colabs.filter(c=>(t==='Todos'||c.turno===t)&&(S.imprimirFerias||!feriasNoPeriodo(c,ds))).sort((a,b)=>a.turno.localeCompare(b.turno)||ord(a,b));
   let h='<table border="1"><tr><th>Colaborador</th><th>Turno</th>'+ds.map(d=>`<th>${NOMES[(dt(d).getDay()+6)%7]} ${br(d)}</th>`).join('')+'</tr>';
-  cs.forEach(c=>{const g=S.grid[c.id]||{};h+=`<tr><td>${esc(c.nome)}${c.cargo==='Encarregado'?' ★':''}</td><td>${c.turno}</td>`+ds.map(d=>{const v=marca(c,d);return `<td align="center"${v==='F'||v==='D'||v==='T'?` bgcolor="${v==='D'?'#bbf7d0':v==='F'?'#fde68a':'#90caf9'}"`:''}>${v==='D'?'DSR':v}</td>`}).join('')+'</tr>'});
+  cs.forEach(c=>{const g=S.grid[c.id]||{};h+=`<tr><td>${esc(c.nome)}${c.cargo==='Encarregado'?' ★':''}</td><td>${c.turno}</td>`+ds.map(d=>{const v=marca(c,d);return `<td align="center"${v==='F'||v==='D'||v==='T'||v==='V'?` bgcolor="${v==='D'?'#bbf7d0':v==='F'?'#fde68a':v==='V'?'#fecaca':'#90caf9'}"`:''}>${v==='D'?'DSR':v==='V'?'FÉRIAS':v}</td>`}).join('')+'</tr>'});
   entrega(new Blob(['\ufeff<html><head><meta charset="utf-8"></head><body>'+h+'</table></body></html>'],{type:'application/vnd.ms-excel'}),'escala-5x2-'+S.inicio+'.xls',share)}
 async function imagem(t,share){
   const semanas=dias(),turnos=['Abertura','Fechamento'].filter(x=>t==='Todos'||t===x),imagens=[];
@@ -636,7 +654,7 @@ function migrarLegado(){
   Object.entries(S.grid||{}).forEach(([id,g])=>{Object.entries(g||{}).forEach(([d,v])=>{if(d>=START&&d<S.inicio){r.grid[id]=r.grid[id]||{};r.grid[id][d]=v;achou=true}})});
   if(achou){S.historico.push(r);save()}
 }
-render();aplicaTema();try{if(!localStorage.getItem(TUTK)){localStorage.setItem(TUTK,'1');tut(0)}}catch(e){}
+migraTurnos();render();aplicaTema();try{if(!localStorage.getItem(TUTK)){localStorage.setItem(TUTK,'1');tut(0)}}catch(e){}
 try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
 checaVersao();document.addEventListener('visibilitychange',()=>{if(!document.hidden)checaVersao()});
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
