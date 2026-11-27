@@ -2,7 +2,7 @@
 <html lang="pt-BR"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#0D7EA4">
-<meta name="app-versao" content="1.7">
+<meta name="app-versao" content="1.8">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon-192.png?v=2">
 <link rel="apple-touch-icon" href="icon-192.png?v=2">
@@ -96,6 +96,7 @@ function gerar(only,outra){
   if(!only){
     for(const c of S.colabs){const o=confEnc(c);if(o){alert(msgEnc(c,o));return}}
     if(!S.colabs.some(c=>c.pd)){alert('Marque quem trabalha e quem fica de DSR no domingo '+br(refDom())+' (botão Domingo).');return}
+    if(S.inicio>START&&!ctxAnterior()&&!outra&&!cadeia())return;
     if(S.inicio>START&&!outra&&!S.colabs.some(c=>[1,2,3,4,5,6,7].some(i=>(S.grid[c.id]||{})[add(S.inicio,-i)]))&&!confirm('O mês anterior ainda não foi gerado. O app segue a escala anterior para calcular as folgas. Gerar mesmo assim?'))return;
   }
   const cs=S.colabs.filter(c=>c.pd);
@@ -396,7 +397,7 @@ function vEscala(){
   <small>O app gera um ciclo fixo de 4 semanas, sempre de segunda a domingo: ${br(S.inicio)} a ${br(add(S.inicio,7*S.semanas-1))}. O ciclo seguinte começa 28 dias depois.</small>
   <details class="no"><summary class="sm">⚙️ Ajustes (inventário e limites)</summary><div class="row"><div style="flex:1"><label>📦 Uma segunda de inventário (repete a cada 2 segundas)</label><input type="date" id="i_inv" value="${S.inv||''}"></div></div>
   <div class="row"><label style="width:100%">Máximo de folgas por dia em cada turno <small>(regra do Fechamento e limite de segurança da Abertura)</small></label>${[0,1,2,3,4].map(i=>`<div style="width:56px"><label>${NOMES[i]}</label><input type="number" min="0" max="20" id="cap${i}" value="${S.cap[i]}"></div>`).join('')}</div><div class="row"><label style="width:100%">Meta de folgas na Abertura <small>(0 = sem meta; terça e quarta começam com 3)</small></label>${[0,1,2,3,4].map(i=>`<div style="width:56px"><label>${NOMES[i]}</label><input type="number" min="0" max="20" id="alvoA${i}" value="${S.alvoA[i]||0}"></div>`).join('')}</div><div class="row"><label style="width:100%">Folgas na segunda em cada semana <small>(deste mês; vazio = usa o limite do dia)</small></label>${[0,1,2,3,4].map(i=>`<div style="width:56px"><label>Sem ${i+1}</label><input type="number" min="0" max="20" id="segN${i}" value="${S.segN&&S.segN[i]!==undefined?S.segN[i]:''}"></div>`).join('')}</div></details>
-  <div class="row"><button onclick="gerarLoad()">⚙️ Gerar escala</button><button class="${S.edita?'':'sec'}" onclick="S.edita=!S.edita;render()">${S.edita?'✔ Concluir edição':'✏️ Editar escala'}</button><button class="sec" onclick="domTela()">📅 Domingo ${br(refDom())}</button></div><details class="no"><summary class="sm">⋯ Mais opções</summary><div class="row"><button class="sec" onclick="ults()">🗓️ Últimas folgas</button><button class="sec" onclick="inv()">📦 Inventário</button><button class="sec" onclick="relatorio()">📋 Relatório do ciclo</button><button class="sec" onclick="relFerias()">🏖️ Relatório de férias</button><button class="sec" onclick="historico()">📚 Histórico</button><button class="sec" onclick="zap()">📲 WhatsApp</button><button class="sec" onclick="exp()">📤 Imprimir / PDF / Excel</button><button class="sec" onclick="shareApp()">🔗 Compartilhar app</button><button class="sec" onclick="limpar()">🗑️ Limpar</button></div></details>
+  <div class="row"><button onclick="gerarLoad()">⚙️ Gerar escala</button><button class="sec" onclick="salvarEscala()">💾 Salvar escala</button><button class="${S.edita?'':'sec'}" onclick="S.edita=!S.edita;render()">${S.edita?'✔ Concluir edição':'✏️ Editar escala'}</button><button class="sec" onclick="domTela()">📅 Domingo ${br(refDom())}</button></div><details class="no"><summary class="sm">⋯ Mais opções</summary><div class="row"><button class="sec" onclick="ults()">🗓️ Últimas folgas</button><button class="sec" onclick="inv()">📦 Inventário</button><button class="sec" onclick="relatorio()">📋 Relatório do ciclo</button><button class="sec" onclick="relFerias()">🏖️ Relatório de férias</button><button class="sec" onclick="historico()">📚 Histórico</button><button class="sec" onclick="zap()">📲 WhatsApp</button><button class="sec" onclick="exp()">📤 Imprimir / PDF / Excel</button><button class="sec" onclick="shareApp()">🔗 Compartilhar app</button><button class="sec" onclick="limpar()">🗑️ Limpar</button></div></details>
   <small>Toque no nome para ver domingos e folgas da pessoa; para ajustar as folgas (F), toque em ✏️ Editar escala. DSR = folga de domingo (só aos domingos). ★ encarregado, 📌 folga fixa, 📦 inventário.</small></div>${aviso()}${chips()}
   ${S.edita?'<div class="warn no" style="background:var(--f)">✏️ <b>Modo edição:</b> toque numa célula para marcar ou tirar a folga (F). O DSR do domingo muda pelo cadastro do colaborador.</div>':''}
   <h3 class="pt">Escala 5x2 — ${esc(S.setor||'')} · ${S.filtro==='Todos'?'Abertura e Fechamento':S.filtro} · ${br(S.inicio)} a ${br(add(S.inicio,7*S.semanas-1))}</h3>
@@ -500,6 +501,20 @@ function zapGo(){const seg=add(S.inicio,7*+g$('z_w').value);
   window.open('https://wa.me/?text='+encodeURIComponent(t),'_blank')}
 const lib=u=>new Promise((ok,no)=>{if(document.querySelector('script[src="'+u+'"]'))return ok();const e=document.createElement('script');e.src=u;e.onload=ok;e.onerror=no;document.head.appendChild(e)});
 const nomeT=t=>t==='Todos'?'Abertura e Fechamento':t;
+const mesMais=(b,o)=>{const d=new Date(+b.slice(0,4),+b.slice(5,7)-1+o,1);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')};
+// copia os últimos 14 dias da escala salva do mês anterior para servirem de base (sequência de trabalho e repetição de folgas)
+function ctxAnterior(){if(S.inicio<=START)return true;const h=(S.historico||[]).find(x=>add(x.inicio,7*x.semanas)===S.inicio);if(!h)return false;
+  S.colabs.forEach(c=>{const hg=h.grid&&h.grid[c.id];if(!hg)return;S.grid[c.id]=S.grid[c.id]||{};for(let i=1;i<=14;i++){const d=add(S.inicio,-i);if(hg[d]&&!S.grid[c.id][d])S.grid[c.id][d]=hg[d]}});return true}
+// gera, em ordem, os meses que faltam entre a última escala salva e o mês pedido
+function cadeia(){const alvoIni=S.inicio,alvoSem=S.semanas,u=(S.historico||[]).filter(h=>h.inicio<alvoIni).sort((a,b)=>a.inicio<b.inicio?1:-1)[0];if(!u)return true;
+  let E=add(u.inicio,7*u.semanas);if(E>=alvoIni)return true;const fila=[];let guard=0;
+  while(E<alvoIni&&guard++<24){let r=null;for(const o of [-1,0,1,2]){const x=mesSemanas(mesMais(E.slice(0,7),o));if(x&&x.inicio===E){r=x;break}}if(!r){alert('Não foi possível encontrar o ciclo que começa em '+br(E)+'.');return false}fila.push(r);E=add(r.inicio,7*r.semanas)}
+  if(E!==alvoIni){alert('Os ciclos não fecham até '+br(alvoIni)+'. Gere os meses em ordem.');return false}
+  if(!confirm('Faltam '+fila.length+' mês(es) entre a última escala salva (início '+br(u.inicio)+') e este mês.\n\nO app vai gerar esses meses em ordem, usando a escala salva como base, e depois gera este mês. Continuar?'))return false;
+  for(const r of fila){S.inicio=r.inicio;S.semanas=r.semanas;S.grid={};if(S.perfil==='abertura'&&Array.isArray(S.segN))S.segN[0]=2;ctxAnterior();gerar();
+    if(!S.colabs.some(c=>Object.keys(S.grid[c.id]||{}).length)){alert('A geração do mês que começa em '+br(r.inicio)+' foi interrompida. Corrija o aviso e tente de novo.');return false}arquivaAtual()}
+  S.inicio=alvoIni;S.semanas=alvoSem;S.grid={};ctxAnterior();return true}
+function salvarEscala(){if(!S.colabs.some(c=>Object.keys(S.grid[c.id]||{}).length)){alert('Gere a escala deste mês antes de salvar.');return}arquivaAtual();alert('Escala do mês que começa em '+br(S.inicio)+' salva. Os próximos meses vão usar esta escala como base.')}
 function arquivaAtual(){
   if(!S.colabs.some(c=>Object.keys(S.grid[c.id]||{}).length))return;
   S.historico=S.historico||[];const r={inicio:S.inicio,semanas:S.semanas||4,inv:S.inv||'',colabs:JSON.parse(JSON.stringify(S.colabs)),grid:JSON.parse(JSON.stringify(S.grid))};
