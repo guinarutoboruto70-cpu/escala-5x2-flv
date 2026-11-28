@@ -2,7 +2,7 @@
 <html lang="pt-BR"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#0D7EA4">
-<meta name="app-versao" content="1.9">
+<meta name="app-versao" content="2.2">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon-192.png?v=2">
 <link rel="apple-touch-icon" href="icon-192.png?v=2">
@@ -97,7 +97,7 @@ function gerar(only,outra){
     for(const c of S.colabs){const o=confEnc(c);if(o){alert(msgEnc(c,o));return}}
     if(!S.colabs.some(c=>c.pd)){alert('Marque quem trabalha e quem fica de DSR no domingo '+br(refDom())+' (botão Domingo).');return}
     if(S.inicio>START&&!ctxAnterior()&&!outra&&!cadeia())return;
-    if(S.inicio>START&&!outra&&!S.colabs.some(c=>[1,2,3,4,5,6,7].some(i=>(S.grid[c.id]||{})[add(S.inicio,-i)]))&&!confirm('O mês anterior ainda não foi gerado. O app segue a escala anterior para calcular as folgas. Gerar mesmo assim?'))return;
+    if(S.inicio>START&&!outra&&!temHist()&&!S.colabs.some(c=>[1,2,3,4,5,6,7].some(i=>(S.grid[c.id]||{})[add(S.inicio,-i)]))&&!confirm('O mês anterior ainda não foi gerado. O app segue a escala anterior para calcular as folgas. Gerar mesmo assim?'))return;
   }
   const cs=S.colabs.filter(c=>c.pd);
   const alvo=only?cs.filter(c=>c.id===only):cs;
@@ -192,7 +192,7 @@ function vInicio(){
 function escolherPerfil(p){S.perfilTemp=p;render()}
 function confirmarInicio(){const n=(g$('inicio_nome')?.value||'').trim();if(!n){alert('Informe o nome do setor ou ambiente.');return}S.perfil=S.perfilTemp;S.setor=n;S.perfilTemp='';S.tab='escala';ENTROU=true;iniciaS();save();aplicaTema();render()}
 function editarAmbiente(){const n=prompt(S.perfil==='gerente'?'Nome do ambiente gerencial:':'Nome do setor:',S.setor||'');if(n&&n.trim()){S.setor=n.trim();save();render()}}
-function aplicaIdentidade(){const t=g$('tituloApp'),sub=g$('subtituloApp');if(!t)return;t.textContent=S.perfil?('🥬 Escala 5x2 — '+(S.perfil==='abertura'?'Abertura':S.perfil==='fechamento'?'Fechamento':(S.setor||'Setor'))):'🥬 Escala 5x2';if(sub)sub.textContent=S.perfil==='gerente'?'Escala gerencial de encarregados':'Folgas de domingo e da semana'}
+function aplicaIdentidade(){const t=g$('tituloApp'),sub=g$('subtituloApp');if(!t)return;t.textContent=(S.perfil?('🥬 Escala 5x2 — '+(S.perfil==='abertura'?'Abertura':S.perfil==='fechamento'?'Fechamento':(S.setor||'Setor'))):'🥬 Escala 5x2')+' · v'+((document.querySelector('meta[name=app-versao]')||{}).content||'?');if(sub)sub.textContent=S.perfil==='gerente'?'Escala gerencial de encarregados':'Folgas de domingo e da semana'}
 const TUTK='escala5x2_tut_v1';
 const TUT=[
 ['📲','Instalar no celular','<b>Android (Chrome):</b> abra o link do app, toque nos três pontinhos (⋮) e escolha <b>Instalar app</b> ou <b>Adicionar à tela inicial</b>.<br><br><b>iPhone (Safari):</b> toque em <b>Compartilhar</b> (quadrado com seta) e depois em <b>Adicionar à Tela de Início</b>.<br><br>O ícone 🥬 aparece na tela do celular, como um app comum.'],
@@ -503,6 +503,7 @@ const lib=u=>new Promise((ok,no)=>{if(document.querySelector('script[src="'+u+'"
 const nomeT=t=>t==='Todos'?'Abertura e Fechamento':t;
 const mesMais=(b,o)=>{const d=new Date(+b.slice(0,4),+b.slice(5,7)-1+o,1);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')};
 // copia os últimos 14 dias da escala salva do mês anterior para servirem de base (sequência de trabalho e repetição de folgas)
+const temHist=()=>(S.historico||[]).some(x=>add(x.inicio,7*x.semanas)===S.inicio);
 function ctxAnterior(){if(S.inicio<=START)return true;const h=(S.historico||[]).find(x=>add(x.inicio,7*x.semanas)===S.inicio);if(!h)return false;
   S.colabs.forEach(c=>{const hg=h.grid&&h.grid[c.id];if(!hg)return;S.grid[c.id]=S.grid[c.id]||{};for(let i=1;i<=14;i++){const d=add(S.inicio,-i);if(hg[d]&&!S.grid[c.id][d])S.grid[c.id][d]=hg[d]}});return true}
 // gera, em ordem, os meses que faltam entre a última escala salva e o mês pedido
